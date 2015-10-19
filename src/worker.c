@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 			hosts = hosts->next;
 		}
 	}
-	printf("Found hostname %s\n", hosts->name);
+	fprintf(stderr, "Found hostname %s\n", hosts->name);
 
 	fflush(stdout);
 	if (fork()) {
