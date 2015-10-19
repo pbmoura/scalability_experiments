@@ -32,6 +32,7 @@
 *.dSYM/
 results/
 logs/
+experiments/
 bin/
 .project
 .cproject
