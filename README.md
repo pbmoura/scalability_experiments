@@ -4,6 +4,8 @@ It is composed by the following executables:
 - loadbalancer: receives messages from client and ditribute to workers doing round robin
 - worker: emulate task execution
 
+You can use make to compile all the executables. The binaries will at bin/ folder.
+
 Each of those executables receives some parameters.
 The script generate.py creates a bash script, in experiments folder, to automate experiments execution.
 The generated script, when executed, runs the system, distributed in DAS-4 nodes, a sequence of times,
