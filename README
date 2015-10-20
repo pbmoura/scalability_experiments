@@ -16,12 +16,13 @@ $1) number of client processes (per step)
 $2) the number of messages each client process will send to the load balancer
 $3) the duration of each task in a worker
 $4) number of nodes running a worker (per step)
-$5) the duration of each synchronization between two workers
-$6) (optional) final step. default=30
-$7) (optional) initial step. default=1
+$5) the duration of each synchronization between two workers in linear phase
+$6) the duration of each synchronization between two workers in quadratic phase
+$7) (optional) final step. default=30
+$8) (optional) initial step. default=1
 
 then, it produces a file with one line per step to execute in the experiment.
-In the first line, the number of processes is equals to $1 * $7 and number of worker instances equals to $$4 * $7.
+In the first line, the number of processes is equals to $1 * $8 and number of worker instances equals to $$4 * $7.
 In each subsequent line, they are incremented by $1 and $4 respectively.
 
 During the execution, time measurements are saved in results folder.
