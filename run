@@ -12,14 +12,14 @@ do
   num=`echo $NODES |tr -s ',' '\n' | grep -c 'node'`
 done
 echo $NODES
-#echo $1 $2 $3 $4 $5 `date` >> logs/$7.worker-`hostname`
-#echo "#" $1 $2 $3 $4 $5 `date` >> results/$7.worker-`hostname`
-prun -np $4 -reserve $RESERVATION ./worker.sh $5 $NODES $6 $7 &
+#echo $1 $2 $3 $4 $6 `date` >> logs/$8.worker-`hostname`
+#echo "#" $1 $2 $3 $4 $6 `date` >> results/$8.worker-`hostname`
+prun -np $4 -reserve $RESERVATION ./worker.sh $5 $6 $NODES $7 $8 &
 sleep 5
 echo "starting load balancer"
-echo $1 $2 $3 $4 $5 `date` >> logs/$7.lb
-echo $1 $2 $3 $4 $5 `date` >> results/$7.lb
-prun -np 1 ./loadbalancer.sh $4 $NODES $6 $7 &
+echo $1 $2 $3 $4 $6 `date` >> logs/$8.lb
+echo $1 $2 $3 $4 $6 `date` >> results/$8.lb
+prun -np 1 ./loadbalancer.sh $4 $NODES $7 $8 &
 loadbalancer=""
 while ((`echo $loadbalancer|wc -c` <= 1))
 do
@@ -33,10 +33,10 @@ do
 done
 echo "it is " $loadbalancer
 sleep 5
-echo $1 $2 $3 $4 $5 `date` >> logs/$7.client
-echo "#" $1 $2 $3 $4 $5 `date` >> results/$7.client
+echo $1 $2 $3 $4 $6 `date` >> logs/$8.client
+echo "#" $1 $2 $3 $4 $6 `date` >> results/$8.client
 echo "starting client"
-prun -np 1 ./client.sh $1 $2 $3 $loadbalancer $4 $6 $7
+prun -np 1 ./client.sh $1 $2 $3 $loadbalancer $4 $5 $6 $7 $8
 echo "killing all"
 killall prun > /dev/null
 preserve -c $RESERVATION
