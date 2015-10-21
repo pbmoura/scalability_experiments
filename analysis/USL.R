@@ -43,13 +43,13 @@ usl.chart <- function(limit, n, throughput, ...) {
   estimated <- usl.formula((1:max(n)), infer[1], infer[2])
   capacity <- throughput/throughput[1]
   usl.plot(n, estimated, capacity, ...)
-  print(usl.error(estimated, capacity))
+  print(usl.error(estimated, capacity, n))
   abline(v=limit)
   infer
 }
 
-usl.error <- function(estimated, measured) {
-  abs(estimated - measured)
+usl.error <- function(estimated, measured, n) {
+  abs(estimated[n] - measured[n])
 }
 
 usl.line <- function(limit, throughput, ...) {
