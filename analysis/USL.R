@@ -7,7 +7,7 @@ usl.prepare <- function (p,X) {
   return(data.frame(x,y))
 }
 
-
+usl.peak <- function (contention, coherency) sqrt((1-contention)/coherency)
 
 usl.inference <- function (p, X) {
   dataset <- usl.prepare(p, X)
@@ -19,7 +19,7 @@ usl.inference <- function (p, X) {
   
   sigma = b-a
   kappa = a
-  peak = sqrt((1-sigma)/kappa)
+  peak = usl.peak(sigma,kappa)
   
   return(c(sigma, kappa, summary(reg)$r.squared, peak))
 }
