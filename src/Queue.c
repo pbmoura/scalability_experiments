@@ -110,31 +110,4 @@ int QueueIsEmpty(Queue *Q)
 {
 	return Q->size == 0;
 }
-/*int main()
-{
-        Queue *Q = createQueue(5);
-	int element;
-	printf("queue is empty? %d\n", QueueIsEmpty(Q));
-        Enqueue(Q,1);
-	printf("queue is empty? %d\n", QueueIsEmpty(Q));
-        Enqueue(Q,2);
-        Enqueue(Q,3);
-        Enqueue(Q,4);
-        printf("Front element is %d\n",front(Q));
-        Enqueue(Q,5);
-        Enqueue(Q,6);
-        DequeueElement(Q, &element);
-	printf("Dequeued element %d\n", element);
-        Enqueue(Q,6);
-	printf("Just to remember. Dequeued element %d\n", element);
-        printf("Front element is %d\n",front(Q));
-        DequeueElement(Q, &element);
-	printf("Dequeued element %d\n", element);
-	printf("queue is empty? %d\n", QueueIsEmpty(Q));
-	Dequeue(Q);
-	Dequeue(Q);
-	Dequeue(Q);
-	Dequeue(Q);
-	Dequeue(Q);
-	printf("queue is empty? %d\n", QueueIsEmpty(Q));
-}*/
+

@@ -2,8 +2,6 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <pthread.h>
-#include <semaphore.h>
-#include <fcntl.h>
 
 #include "common.c"
 #include "Queue.c"
@@ -115,12 +113,13 @@ int main(int argc, char *argv[]) {
 
 	is_first = strcmp(hostname, token)?0:1;
 	//create shared semaphore for serial synchronization.
-	sem_work = sem_open("/sem_work", O_CREAT | O_EXCL, 0644, is_first);
+	createsemaphore(sem_work, "/sem_work", is_first);
+	/*sem_work = sem_open("/sem_work", O_CREAT | O_EXCL, 0644, is_first);
 	if (sem_work == SEM_FAILED ) {
 		fprintf(stderr, "Error creating semaphore %d\n", errno);
 		return 1;
 	}
-	sem_unlink("/sem_work");
+	sem_unlink("/sem_work");*/
 
 	//creates a circular liked list from peers
 	token = strtok(NULL, ",");
