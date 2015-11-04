@@ -28,9 +28,9 @@ int main(int argc, char *argv[]) {
 
 				sock = connectTo(load_balancer, PORT_LB);
 				//send request
-				printf("sending request %d %d\n", i, j);
+				fprintf(stderr,"sending request %d %d\n", i, j);
 				write(sock, &units, sizeof(units));
-				printf("sent request %d %d\n", i, j);
+				fprintf(stderr,"sent request %d %d\n", i, j);
 				//wait for completion
 				read(sock, &reply, sizeof(reply));
 				close(sock);

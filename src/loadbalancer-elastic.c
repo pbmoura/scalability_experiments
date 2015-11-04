@@ -16,14 +16,14 @@ void arrival() {
 	sem_wait(sem_load);
 	load++;
 	sem_post(sem_load);
-	printf("arrival %d\n", load);
+	fprintf(stderr,"arrival %d\n", load);
 }
 
 void departure() {
 	sem_wait(sem_load);
 	load--;
 	sem_post(sem_load);
-	printf("departure %d\n", load);
+	fprintf(stderr,"departure %d\n", load);
 }
 
 void *handle_request(void *arg) {
@@ -31,7 +31,7 @@ void *handle_request(void *arg) {
 	struct conn_t *conn = (struct conn_t *) arg;
 	int data;
 	long st, et;
-	printf("handling to %s\n", conn->hostname);
+	fprintf(stderr,"handling to %s\n", conn->hostname);
 	fprintf(stderr, "connection at %ld\n", time_millis());
 	arrival();
 	st = time_millis();
@@ -43,7 +43,9 @@ void *handle_request(void *arg) {
 	et = time_millis();
 	departure();
 	fprintf(stdout, "%ld %ld %s\n", st, et, conn->hostname);
+	fflush(stdout);
 	free(conn);
+	return NULL;
 }
 
 int main(int argc, char *argv[]) {
@@ -58,7 +60,7 @@ int main(int argc, char *argv[]) {
 	struct conn_t *conn;
 	pthread_t t1;
 
-	createsemaphore(sem_load, "/sem_load", 1);
+	sem_load = createsemaphore("/sem_load", 1);
 
 	i = 0;
 	token = strtok(hostnames, ",");
@@ -76,8 +78,8 @@ int main(int argc, char *argv[]) {
 		counter = counter == workers_n - 1 ? 0 : counter + 1;
 		fprintf(stderr, "next worker: %s\n", conn->hostname);
 		conn->fd = accept(listenfd, (struct sockaddr*) NULL, NULL );
-		printf("accepted\n");
+		fprintf(stderr,"accepted\n");
 		i = pthread_create(&t1, NULL, handle_request, (void *)conn);
-		printf("pthread_create %d\n", i);
+		fprintf(stderr,"pthread_create %d\n", i);
 	}
 }

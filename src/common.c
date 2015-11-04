@@ -91,11 +91,12 @@ void socketlisten(int *listenfd, int port) {
 	listen(*listenfd, 30);
 }
 
-void createsemaphore(sem_t *sem, char *sem_name, int value) {
-	sem = sem_open(sem_name, O_CREAT | O_EXCL, 0644, value);
-		if (sem == SEM_FAILED ) {
-			fprintf(stderr, "Error creating semaphore %s: %d\n", sem_name, errno);
-			exit(1);
-		}
-		sem_unlink(sem_name);
+sem_t* createsemaphore(char *sem_name, int value) {
+	sem_t *sem = sem_open(sem_name, O_CREAT | O_EXCL, 0644, value);
+	if (sem == SEM_FAILED ) {
+		fprintf(stderr, "Error creating semaphore %s: %d\n", sem_name, errno);
+		exit(1);
+	}
+	sem_unlink(sem_name);
+	return sem;
 }
