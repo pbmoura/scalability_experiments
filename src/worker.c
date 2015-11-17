@@ -91,7 +91,8 @@ int main(int argc, char *argv[]) {
 	int contention = atoi(argv[1]) * 1000;
 	int coherency = atoi(argv[2]) * 1000;
 	char *peers = argv[3];
-	counter = atoi(argv[4]); 
+	int n_processes = atoi(argv[4]);
+	counter = atoi(argv[5]);
 	int listenfd = 0, connfd = 0;
 	int i, units;
 	int load = 0;
@@ -156,7 +157,8 @@ int main(int argc, char *argv[]) {
 
 		socketlisten(&listenfd, atoi(PORT));
 
-		i = pthread_create(&t1, NULL, process_requests, NULL );
+		for(i=0; i < n_processes; i++)
+			pthread_create(&t1, NULL, process_requests, NULL );
 		enqueue_requests(listenfd);
 	}
 }
