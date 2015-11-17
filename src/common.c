@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <semaphore.h>
 #include <fcntl.h>
-
+#include <string.h>
 
 #define PORT "8888"
 #define PORT_LB "8887"
@@ -37,6 +37,7 @@ struct addrinfo* getConnection(char *hostname, char *port) {
 	char *addr, *node;
 
 	//HARDCODED: use infiniband on DAS-4
+
 	addr = malloc(16);
 	node = malloc(3);
 	sprintf(node, "%d", atoi(hostname + 4));
