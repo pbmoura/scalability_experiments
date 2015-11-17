@@ -27,12 +27,18 @@ usl.inference <- function (p, X) {
 
 
 usl.plot <- function(n, estimated, measured, ...) {
-  max = length(throughput)
+  #max = length(throughput)
   plot(n, measured, ylab = "capacity", ...)
   lines(estimated)
 }
 
 usl.formula <- function(xs, sigma, kappa) return(xs/(1+sigma*(xs-1)+xs*kappa*(xs-1)))
+
+usl.inverted <- function(xs, sigma, kappa) return( (-sigma + kappa +1/xs - sqrt(  (sigma - kappa - 1/xs)^2 - 4*kappa*(1-sigma) ))/(2*kappa) )
+usl.invertedp <- function(xs, sigma, kappa) return( (-sigma + kappa +1/xs + sqrt(  (sigma - kappa - 1/xs)^2 - 4*kappa*(1-sigma) ))/(2*kappa) )
+#usl.inverted <- function(xs, sigma, kappa) return(-sqrt( (-1/kappa) - (sigma/-kappa) + ((1+xs*(kappa-sigma))^2/(4*(-xs*kappa)^2)) ) - (1 - xs*(sigma + kappa) )/(-2*xs*kappa))
+#usl.invertedp <- function(xs, sigma, kappa) return(sqrt( (-1/kappa) - (sigma/-kappa) + ((1+xs*(kappa-sigma))^2/(4*(-xs*kappa)^2)) ) - (1 - xs*(sigma + kappa) )/(-2*xs*kappa))
+
 
 usl.chart <- function(limit, n, throughput, ...) {
   if (length(limit) == 1)
@@ -52,7 +58,7 @@ usl.error <- function(estimated, measured, n) {
   abs(estimated[n] - measured[n])
 }
 
-usl.line <- function(limit, throughput, ...) {
+usl.line <- function(limit, n, throughput, ...) {
   ii <- c(1:limit)
   infer <- usl.inference(n[ii], throughput[ii])
   lines(usl.formula((1:30), infer[1], infer[2]), ...)
