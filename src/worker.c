@@ -5,17 +5,15 @@
 
 #include "common.c"
 #include "Queue.c"
+#include "Linked_list.c"
 
-#define PORT_SER "8889"
-#define PORT_PAR "8890"
-
-struct node {
+/*struct node {
 	char* name;
 	struct node *next;
-};
+};*/
 
 Queue *Q;
-struct node *hosts;
+Linked_list *hosts;
 sem_t *sem_work;
 char *hostname;
 int counter;
@@ -97,39 +95,28 @@ int main(int argc, char *argv[]) {
 	int i, units;
 	int load = 0;
 	char *token;
-	struct node *next;
+	Linked_list *next;
 	pid_t pid;
 	pthread_t t1;
 
-	//get hostname
-	hosts = malloc(sizeof(struct node));
 	Q = createQueue(50);
+	//get hostname
 	hostname = malloc(8);
 	gethostname(hostname, 8);
 
 	//starts a circular liked list from peers
 	token = strtok(peers, ",");
-	hosts->name = token;
-	hosts->next = hosts;
+	hosts = createCircularList(token);
 
 	is_first = strcmp(hostname, token)?0:1;
-	//create shared semaphore for serial synchronization.
 	sem_work = createsemaphore("/sem_work", is_first);
-	/*sem_work = sem_open("/sem_work", O_CREAT | O_EXCL, 0644, is_first);
-	if (sem_work == SEM_FAILED ) {
-		fprintf(stderr, "Error creating semaphore %d\n", errno);
-		return 1;
-	}
-	sem_unlink("/sem_work");*/
 
-	//creates a circular liked list from peers
+	//fill a circular liked list with node names from peers
 	token = strtok(NULL, ",");
 	while (token != NULL ) {
-		next = malloc(sizeof(struct node));
-		next->name = token;
-		next->next = hosts->next;
-		hosts->next = next;
-		hosts = next;
+
+		hosts = insertNode(token, hosts);
+
 		token = strtok(NULL, ",");
 	}
 
@@ -139,7 +126,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "ERROR hostname not found in list\n");
 			return 1;
 		} else {
-			hosts = hosts->next;
+			iterate(hosts);
 		}
 	}
 	fprintf(stderr, "Found hostname %s\n", hosts->name);
