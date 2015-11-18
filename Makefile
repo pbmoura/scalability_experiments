@@ -1,4 +1,4 @@
-all: client worker lb play
+all: client worker lb play pool
 
 client:
 	gcc src/client.c -o bin/client -lrt -lpthread
@@ -11,6 +11,9 @@ worker:
 
 lb:
 	gcc src/loadbalancer-elastic.c -o bin/loadbalancer -lrt -lpthread -lm
+	
+pool:
+	gcc src/pool-manager.c -o bin/pool -lrt -lpthread
 
 clean:
 	rm bin/*
