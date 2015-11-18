@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "common.c"
 
 int main(int argc, char* argv[]) {
@@ -16,19 +15,16 @@ int main(int argc, char* argv[]) {
 	}
 
 
-	printf("PLAYER: time %ld\n", time_millis());
-	while(EOF != fscanf(fd, "%u\n", &delay)) {
+	while(EOF != fscanf(fd, "%lu\n", &delay)) {
 		counter++;
-		printf("PLAYER: delay %u\n", delay);
 		usleep(1000 * delay);
-		printf("PLAYER: time %ld\n", time_millis());
 		if (!fork()) {
 			st = time_millis();
 			sock = connectTo(load_balancer, PORT_LB);
 			write(sock, &units, sizeof(units));
 			read(sock, &reply, sizeof(reply));
 			duration = time_millis() - st;
-			printf("%ld %u %ld\n", st, delay, duration);
+			printf("%ld %lu %ld %d\n", st, delay, duration, reply);
 			return 0;
 		}
 	}
