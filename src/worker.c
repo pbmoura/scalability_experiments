@@ -114,9 +114,7 @@ int main(int argc, char *argv[]) {
 	//fill a circular liked list with node names from peers
 	token = strtok(NULL, ",");
 	while (token != NULL ) {
-
-		hosts = insertNode(token, hosts);
-
+		hosts = insertAfter(token, hosts);
 		token = strtok(NULL, ",");
 	}
 
