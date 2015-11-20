@@ -16,9 +16,9 @@ double service_time(int w) { //n is the number of workers
 	return s1 + s1 * contention * (n - 1) + s1 * coherency * n * (n - 1);
 }
 
-double arrival_rate(double t) { //t is the service time
-	printf("arrival rate for %d %f\n", load, t);
-	return load / t;
+double arrival_rate(int current_load, double service_time) { //t is the service time
+	printf("arrival rate for %d %f\n", current_load, service_time);
+	return current_load / service_time;
 }
 
 double estimate_workers(double x) { //x is required throughput
@@ -91,20 +91,25 @@ void release_workers(char* host, int qtd) {
 	}
 }
 
+int estimate_num_workers(int current_num_workers, int current_load) {
+	int n;
+	if (load == 0)
+		n = 1;
+	else {
+		n = ceil(estimate_workers(arrival_rate(current_load, service_time(current_num_workers))));
+		if (n < 1)
+			n = 1;
+	}
+	return n;
+}
+
 void* monitoring(void* arg) {
 	char* host_name = (char*) arg;
-	int n;
+	int n, diff;
 	while (1) {
-		usleep(500000);
-		if (load == 0)
-			n = 1;
-		else {
-			n = ceil(estimate_workers(arrival_rate(service_time(num_workers))));
-			if (n < 1)
-				n = 1;
-		}
+		n = estimate_num_workers(num_workers, load);
 		printf("monitoring %d %d\n", num_workers, n);
-		int diff = n - num_workers;
+		diff = n - num_workers;
 		if (diff > 0) {
 			request_workers(host_name, diff);
 		} else if (diff < 0) {
@@ -158,10 +163,7 @@ int main(int argc, char *argv[]) {
 	s1 = atof(argv[4]);
 	x1 = atof(argv[5]);
 
-
-	char *token;  //for hosts tokenization
-	int sock;
-	int listenfd = 0, counter = 0, connfd = 0;
+	int listenfd = 0, connfd = 0;
 	pthread_t t_mon, t_req;
 
 	sem_load = createsemaphore("/sem_load", 1);
@@ -172,7 +174,7 @@ int main(int argc, char *argv[]) {
 	socketlisten(&listenfd, atoi(PORT_LB));
 
 	fflush(stdout);
-	pthread_create(&t_req, NULL, monitoring, (void *) pool_manager);
+	pthread_create(&t_mon, NULL, monitoring, (void *) pool_manager);
 	while (1) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		fprintf(stderr, "accepted\n");
