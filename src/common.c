@@ -12,6 +12,7 @@
 #define PORT "8888"
 #define PORT_LB "8887"
 #define PORT_PM "8886"
+#define PORT_MN "8885"
 
 void work(int units, int usage, int delay) {
 	int i, j;
