@@ -8,12 +8,12 @@
 #include "Linked_list.c"
 
 /*struct node {
-	char* name;
-	struct node *next;
-};*/
+ char* name;
+ struct node *next;
+ };*/
 
 Queue *Q;
-Linked_list *hosts, *tail;
+Linked_list *tail = NULL;
 sem_t *sem_work;
 char *hostname;
 int counter;
@@ -31,16 +31,18 @@ void enqueue_requests(int listen) {
 
 void synchronize(int serialize, char *port) {
 	int units, serverfd;
-	iterate(hosts);
-	while (strcmp(hostname, hosts->name) != 0) {
+	Linked_list *node;
+	node = tail->next;
+	//iterate(hosts);
+	do { //while (strcmp(hostname, hosts->name) != 0) {
 		if (serialize)
 			sem_wait(sem_work);
-		serverfd = connectTo(hosts->name, port);
+		serverfd = connectTo(node->name, port);
 		write(serverfd, &units, sizeof(int));
 		read(serverfd, &units, sizeof(int));
 		close(serverfd);
-		iterate(hosts);
-	}
+		iterate(node);
+	} while (node != tail);
 }
 
 void* process_requests(void *arg) {
@@ -85,8 +87,16 @@ void receive_sync(int serialize, char* port, int time) {
 	}
 }
 
+void add_peer(char* name) {
+	fprintf(stderr, "including %s as a peer\n", name);
+	if (tail == NULL )
+		tail = createCircularList(name);
+	else
+		tail = insertAfter(name, tail);
+}
+
 void* manage_peers(void* arg) {
-	int sock = (int)arg;
+	int sock = (int) arg;
 	int action, size;
 	char* name;
 	read(sock, &action, sizeof(int));
@@ -95,8 +105,7 @@ void* manage_peers(void* arg) {
 	read(sock, name, size);
 	pthread_mutex_lock(&m_peers);
 	if (action > 0) {
-		fprintf(stderr, "including %s as a peer\n", name);
-		tail = insertAfter(name, tail);
+		add_peer(name);
 	} else {
 		if (strcmp(hostname, name) == 0) {
 			fprintf(stderr, "going back to pool. destroying my peers list\n");
@@ -115,71 +124,77 @@ void* manage_peers_listen(void* arg) {
 	pthread_t t1;
 	while (1) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
-		pthread_create(&t1, NULL, manage_peers, (void*)connfd);
+		pthread_create(&t1, NULL, manage_peers, (void*) connfd);
 	}
 }
 
 int main(int argc, char *argv[]) {
 	int contention = atoi(argv[1]) * 1000;
 	int coherency = atoi(argv[2]) * 1000;
-	char *peers = argv[3];
-	int n_processes = atoi(argv[4]);
-	counter = atoi(argv[5]);
+	int n_processes = atoi(argv[3]);
+	char *peers;
 	int listenfd = 0, connfd = 0;
 	int i, units;
 	int load = 0;
 	char *token;
+	Linked_list *hosts;
 	pid_t pid;
 	pthread_t t1, t2;
 
 	Q = createQueue(50);
-	pthread_mutex_init(&m_peers, NULL);
+	pthread_mutex_init(&m_peers, NULL );
 
-	//get hostname
+//get hostname
 	hostname = malloc(8);
 	gethostname(hostname, 8);
 
-	//starts a circular liked list from peers
-	token = strtok(peers, ",");
-	tail = createCircularList(token);
+	if (argc > 4) {
+		peers = argv[4];
+		//starts a circular liked list from peers
+		token = strtok(peers, ",");
+		tail = createCircularList(token);
 
-	is_first = strcmp(hostname, token)?0:1;
-	sem_work = createsemaphore("/sem_work", is_first);
+		is_first = strcmp(hostname, token) ? 0 : 1;
+		sem_work = createsemaphore("/sem_work", is_first);
 
-	//fill a circular liked list with node names from peers
-	token = strtok(NULL, ",");
-	while (token != NULL ) {
-		tail = insertAfter(token, tail);
+		//fill a circular liked list with node names from peers
 		token = strtok(NULL, ",");
-	}
-
-	//finds the position of this node in the list
-	hosts = tail;
-	while (strcmp(hostname, hosts->name) != 0) {
-		if (hosts->next == tail) {
-			fprintf(stderr, "ERROR hostname not found in list\n");
-			return 1;
-		} else {
-			iterate(hosts);
+		while (token != NULL ) {
+			tail = insertAfter(token, tail);
+			token = strtok(NULL, ",");
 		}
-	}
-	fprintf(stderr, "Found hostname %s\n", hosts->name);
 
+		//finds the position of this node in the list
+		hosts = tail;
+		do { //while (strcmp(hostname, hosts->name) != 0) {
+			if (strcmp(hosts->next->name, hostname) == 0) {
+				fprintf(stderr, "removing hostname from peers list\n");
+				if (removeNext(hosts) == tail)
+					tail = hosts;
+				//return 1;
+			} // else {
+			iterate(hosts);
+			//}
+		} while (hosts != tail);
+		fprintf(stderr, "Found hostname %s\n", hosts->name);
+	} else {
+
+	}
 	fflush(stdout);
 	if (fork()) {
 		//receives connections from peers
-		if(fork())
+		if (fork())
 			receive_sync(0, PORT_SER, contention);
 		else
 			receive_sync(1, PORT_PAR, coherency);
 
 	} else {
 		//receives connections from load balancer
-		pthread_create(&t1, NULL, manage_peers_listen, NULL);
+		pthread_create(&t1, NULL, manage_peers_listen, NULL );
 
 		socketlisten(&listenfd, atoi(PORT));
 
-		for(i=0; i < n_processes; i++)
+		for (i = 0; i < n_processes; i++)
 			pthread_create(&t2, NULL, process_requests, NULL );
 		enqueue_requests(listenfd);
 	}
