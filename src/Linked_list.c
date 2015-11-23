@@ -38,3 +38,24 @@ Linked_list* removeNext(Linked_list* list) {
 		list->next = node->next;
 	return node;
 }
+
+Linked_list* removeNode(char* name, Linked_list *list) {
+	Linked_list *iterator, *node;
+	iterator = list;
+	while(iterator->next != list) {
+		if(strcmp(iterator->next->name, name) == 0) {
+			return removeNext(iterator);
+		}
+		iterate(iterator);
+	}
+	return NULL;
+}
+
+void destroyList(Linked_list *list) {
+	Linked_list *node;
+	while(list != NULL) {
+		node = list;
+		iterate(list);
+		free(node);
+	}
+}

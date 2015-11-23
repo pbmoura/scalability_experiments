@@ -12,12 +12,12 @@ double contention, coherency, s1, x1;
 
 double service_time(int w) { //n is the number of workers
 	double n = (double) w;
-	printf("service time for %d\n", w);
+	fprintf(stderr,"service time for %d\n", w);
 	return s1 + s1 * contention * (n - 1) + s1 * coherency * n * (n - 1);
 }
 
 double arrival_rate(int current_load, double service_time) { //t is the service time
-	printf("arrival rate for %d %f\n", current_load, service_time);
+	fprintf(stderr,"arrival rate for %d %f\n", current_load, service_time);
 	return current_load / service_time;
 }
 
@@ -31,14 +31,44 @@ double estimate_workers(double x) { //x is required throughput
 	return floor(w * 10) / 10;
 }
 
+void send_worker(char* dest, int action, char* node) {
+	int sock = connectTo(dest, PORT_MN);
+	int size = sizeof(node);
+	write(sock, &action, sizeof(int));
+	write(sock, &size, sizeof(int));
+	write(sock, node, size);
+}
+
+void update_workers(int action, char* node) {
+	Linked_list *iterator;
+
+	iterator = workers;
+	while (iterator->next != workers) {
+		send_worker(iterator->name, action, node);
+		iterate(iterator);
+	}
+}
+
+void send_workers(char* node) {
+	Linked_list *iterator;
+
+	iterator = workers;
+	while (iterator->next != workers) {
+		send_worker(node, 1, iterator->name);
+		iterate(iterator);
+	}
+}
+
 void add_worker(char* name) {
 	printf("adding worker %s\n", name);
 	sem_wait(sem_workers);
 	if (workers == NULL ) {
-		puts("creating");
+		//puts("creating");
 		workers = createCircularList(name);
 	} else {
-		puts("inserting");
+		//puts("inserting");
+		update_workers(1, name);
+		send_workers(name);
 		workers = insertAfter(name, workers);
 	}
 	num_workers++;
@@ -49,6 +79,7 @@ char* remove_worker() {
 	Linked_list *node;
 	sem_wait(sem_workers);
 	node = removeNext(workers);
+	update_workers(-1, node->name);
 	num_workers--;
 	sem_post(sem_workers);
 	return node->name;
@@ -85,6 +116,7 @@ void release_workers(char* host, int qtd) {
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i > qtd; i--) {
 		node = remove_worker();
+		fprintf(stderr, "removing worker %s\n", node);
 		size = sizeof(node);
 		write(sock, &size, sizeof(int));
 		write(sock, node, size);
@@ -96,7 +128,10 @@ int estimate_num_workers(int current_num_workers, int current_load) {
 	if (load == 0)
 		n = 1;
 	else {
-		n = ceil(estimate_workers(arrival_rate(current_load, service_time(current_num_workers))));
+		n = ceil(
+				estimate_workers(
+						arrival_rate(current_load,
+								service_time(current_num_workers))));
 		if (n < 1)
 			n = 1;
 	}
