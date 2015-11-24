@@ -10,7 +10,7 @@ typedef struct Queue
         int rear;
         long *elements;
 
-	pthread_mutex_t mutex_front, mutex_rear;
+	pthread_mutex_t mutex;
 	sem_t *sem;
 }Queue;
 
@@ -28,8 +28,7 @@ Queue * createQueue(int maxElements)
 	sem_name = malloc(23);
 	sprintf(sem_name, "/s%ld", (long)Q);
 
-	pthread_mutex_init(&(Q->mutex_front), NULL);
-	pthread_mutex_init(&(Q->mutex_rear), NULL);
+	pthread_mutex_init(&(Q->mutex), NULL);
 
 	Q->sem = sem_open(sem_name, O_CREAT | O_EXCL, 0644, 0);
 	sem_unlink(sem_name);
@@ -66,10 +65,10 @@ long front(Queue *Q)
 void DequeueElement(Queue *Q, long *element)
 {
 	sem_wait(Q->sem);
-	pthread_mutex_lock(&(Q->mutex_front));
+	pthread_mutex_lock(&(Q->mutex));
 	*element = front(Q);
 	Dequeue(Q);
-	pthread_mutex_unlock(&(Q->mutex_front));
+	pthread_mutex_unlock(&(Q->mutex));
 }
 void Enqueue(Queue *Q, long element)
 {
@@ -79,7 +78,7 @@ void Enqueue(Queue *Q, long element)
         }
         else
         {
-		pthread_mutex_lock(&(Q->mutex_rear));
+		pthread_mutex_lock(&(Q->mutex));
                 Q->size++;
                 Q->rear = Q->rear + 1;
                 if(Q->rear == Q->capacity)
@@ -87,7 +86,7 @@ void Enqueue(Queue *Q, long element)
                         Q->rear = 0;
                 }
                 Q->elements[Q->rear] = element;
-		pthread_mutex_unlock(&(Q->mutex_rear));
+		pthread_mutex_unlock(&(Q->mutex));
 		sem_post(Q->sem);
         }
         return;
