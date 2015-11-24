@@ -24,7 +24,7 @@ void enqueue_requests(int listen) {
 	int sock;
 	while (1) {
 		sock = accept(listen, (struct sockaddr*) NULL, NULL );
-		fprintf(stderr, "LISTEN got request at %ld\n", time_millis());
+		fprintf(stderr, "LISTEN got request %d %ld\n", sock, time_millis());
 		Enqueue(Q, sock);
 	}
 }
@@ -32,9 +32,12 @@ void enqueue_requests(int listen) {
 void synchronize(int serialize, char *port) {
 	int units, serverfd;
 	Linked_list *node;
+	if (tail == NULL)
+		return;
 	node = tail->next;
 	//iterate(hosts);
 	do { //while (strcmp(hostname, hosts->name) != 0) {
+		fprintf(stderr, "synch %d %s\n", serialize, node->name);
 		if (serialize)
 			sem_wait(sem_work);
 		serverfd = connectTo(node->name, port);
@@ -49,7 +52,9 @@ void* process_requests(void *arg) {
 	int i, sock, units, sem_value;
 	long st, et;
 	while (1) {
+		fprintf(stderr, "%ld process_request\n", time_millis());
 		DequeueElement(Q, &sock);
+		fprintf(stderr, "%ld processing %d\n", time_millis(), sock);
 		st = time_millis();
 		read(sock, &units, sizeof(units));
 		//contention - linear increase
@@ -58,10 +63,11 @@ void* process_requests(void *arg) {
 		usleep(units * 1000);
 		//coherency - quadratic increase
 		synchronize(1, PORT_PAR);
+		fprintf(stderr, "%ld replying %d\n", time_millis(), sock);
 		write(sock, &units, sizeof(int));
 		et = time_millis();
-		fprintf(stdout, "%d %ld %ld\n", counter, st, et);
-		fflush(stdout);
+		//fprintf(stdout, "%d %ld %ld %d\n", counter, st, et-st, sock);
+		fprintf(stderr, "%d %ld %ld %d\n", counter, st, et-st, sock);
 	}
 }
 
@@ -103,6 +109,7 @@ void* manage_peers(void* arg) {
 	read(sock, &size, sizeof(int));
 	name = malloc(size);
 	read(sock, name, size);
+	close(sock);
 	pthread_mutex_lock(&m_peers);
 	if (action > 0) {
 		add_peer(name);
@@ -120,7 +127,7 @@ void* manage_peers(void* arg) {
 
 void* manage_peers_listen(void* arg) {
 	int listenfd = 0, connfd = 0;
-	socketlisten(&listenfd, PORT_MN);
+	socketlisten(&listenfd, atoi(PORT_MN));
 	pthread_t t1;
 	while (1) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );

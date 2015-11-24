@@ -9,25 +9,24 @@ void* process_request(void* arg) {
 	int qtd, i, size;
 	char* node;
 	read(socket, &qtd, sizeof(int));
-	printf("requested %d\n", qtd);
+	fprintf(stderr, "%ld requested %d\n", time_millis(), qtd);
 	if(qtd > 0) {
-		puts("sending");
 		for(i = 0; i<qtd; i++) {
 			DequeueElement(nodes, &node);
 			size = sizeof(node);
 			write(socket, &size, sizeof(int));
 			write(socket, node, size);
-			printf("sent %s\n", node);
+			fprintf(stderr, "sent %s\n", node);
 		}
 	} else {
-		puts("receiving");
 		for(i = 0; i>qtd; i--) {
 			read(socket, &size, sizeof(int));
 			node = malloc(size);
 			read(socket, node, sizeof(node));
 			Enqueue(nodes, node);
-			printf("received %s\n", node);
+			fprintf(stderr, "received %s\n", node);
 		}
+		close(socket);
 	}
 	return 0;
 }
@@ -42,11 +41,10 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in serv_addr;
 	pthread_t t1;
 
-	puts("processing node list");
 	nodes = createQueue(workers_n);
 	token = strtok(hostnames, ",");
 	while (token != NULL ) {
-		printf("node %s\n", token);
+		fprintf(stderr, "adding node %s\n", token);
 		Enqueue(nodes, token);
 		token = strtok(NULL, ",");
 
