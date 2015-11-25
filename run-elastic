@@ -9,19 +9,20 @@ echo "log_file: " $log_file
 mkdir -p logs
 mkdir -p results
 echo "starting workers"
-RESERVATION=`preserve -# $7 -t 15:00|head -n 1 |cut -f 3 -d ' '|sed 's/://'`
-echo $RESERVATION
+#RESERVATION=`preserve -# $7 -t 15:00|head -n 1 |cut -f 3 -d ' '|sed 's/://'`
+#echo $RESERVATION
+prun -np $7 ./worker-elastic.sh $2 $3 $6 $log_file &
 num=0
 while [ $num != $7 ];
 do
   sleep 5
-  NODES=`preserve -llist | grep $RESERVATION | cut -f 9 | sed 's/ /,/g'`
+  NODES=`preserve -llist | grep $USER | cut -f 9 | sed 's/ /,/g'`
   num=`echo $NODES |tr -s ',' '\n' | grep -c 'node'`
 done
 echo $NODES
 #echo $1 $2 $3 $4 $6 `date` >> logs/$8.worker-`hostname`
 #echo "#" $1 $2 $3 $4 $6 `date` >> results/$8.worker-`hostname`
-prun -np $7 -reserve $RESERVATION ./worker-elastic.sh $2 $3 $6 $log_file &
+#prun -np $7 -reserve $RESERVATION ./worker-elastic.sh $2 $3 $6 $log_file &
 sleep 5
 
 echo "starting pool manager"
@@ -64,5 +65,5 @@ echo "starting trace"
 prun -np 1 ./trace-player.sh $1 $loadbalancer $8 $log_file
 echo "killing all"
 killall prun > /dev/null
-preserve -c $RESERVATION
+#preserve -c $RESERVATION
 
