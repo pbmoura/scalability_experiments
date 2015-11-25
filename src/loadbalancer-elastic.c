@@ -165,6 +165,8 @@ void* monitoring(void* arg) {
 				send_worker(token_start, 0, NULL);
 			}
 		}
+		if (token_start == NULL)
+			send_worker(workers->name, 0, NULL);
 	}
 	return 0;
 }
