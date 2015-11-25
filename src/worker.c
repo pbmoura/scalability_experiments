@@ -24,7 +24,7 @@ void enqueue_requests(int listen) {
 	int sock;
 	while (1) {
 		sock = accept(listen, (struct sockaddr*) NULL, NULL );
-		fprintf(stderr, "LISTEN got request %d %ld\n", sock, time_millis());
+		fprintf(stderr, "%ld LISTEN got request %d\n", time_millis(), sock);
 		Enqueue(Q, sock);
 	}
 }
@@ -37,7 +37,7 @@ void synchronize(int serialize, char *port) {
 	node = tail->next;
 	//iterate(hosts);
 	do { //while (strcmp(hostname, hosts->name) != 0) {
-		fprintf(stderr, "synch %d %s\n", serialize, node->name);
+		fprintf(stderr, "%ld synch %d %s\n", time_millis(), serialize, node->name);
 		if (serialize)
 			sem_wait(sem_work);
 		serverfd = connectTo(node->name, port);
@@ -66,8 +66,7 @@ void* process_requests(void *arg) {
 		fprintf(stderr, "%ld replying %d\n", time_millis(), sock);
 		write(sock, &units, sizeof(int));
 		et = time_millis();
-		//fprintf(stdout, "%d %ld %ld %d\n", counter, st, et-st, sock);
-		fprintf(stderr, "%d %ld %ld %d\n", counter, st, et-st, sock);
+		fprintf(stdout, "%d %ld %ld %d\n", counter, st, et-st, sock);
 	}
 }
 
@@ -88,13 +87,13 @@ void receive_sync(int serialize, char* port, int time) {
 			return;
 		} else {
 			if (pid == -1)
-				fprintf(stderr, "ERROR creating process: %d\n", errno);
+				fprintf(stderr, "%ld ERROR creating process: %d\n", time_millis(), errno);
 		}
 	}
 }
 
 void add_peer(char* name) {
-	fprintf(stderr, "including %s as a peer\n", name);
+	fprintf(stderr, "%ld including %s as a peer\n", time_millis(), name);
 	if (tail == NULL )
 		tail = createCircularList(name);
 	else
@@ -115,10 +114,10 @@ void* manage_peers(void* arg) {
 		add_peer(name);
 	} else {
 		if (strcmp(hostname, name) == 0) {
-			fprintf(stderr, "going back to pool. destroying my peers list\n");
+			fprintf(stderr, "%ld going back to pool. destroying my peers list\n", time_millis());
 			destroyList(tail);
 		} else {
-			fprintf(stderr, "removing %s from my peers\n", name);
+			fprintf(stderr, "%ld removing %s from my peers\n", time_millis(), name);
 			removeNode(name, tail);
 		}
 	}
