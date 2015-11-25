@@ -9,6 +9,7 @@ int num_workers = 0;
 Linked_list *workers = NULL;
 sem_t *sem_load, *sem_workers;
 double contention, coherency, s1, x1;
+char* token_start;
 
 double service_time(int w) { //w is the number of workers
 	double n = (double) w;
@@ -36,8 +37,10 @@ void send_worker(char* dest, int action, char* node) {
 	int sock = connectTo(dest, PORT_MN);
 	int size = sizeof(node);
 	write(sock, &action, sizeof(int));
-	write(sock, &size, sizeof(int));
-	write(sock, node, size);
+	if (action != 0) {
+		write(sock, &size, sizeof(int));
+		write(sock, node, size);
+	}
 }
 
 void update_workers(int action, char* node) {
@@ -66,6 +69,8 @@ void add_worker(char* name) {
 	if (workers == NULL ) {
 		fprintf(stderr, "creating list\n");
 		workers = createCircularList(name);
+		send_worker(name, 0, NULL);
+		token_start = name;
 	} else {
 		fprintf(stderr, "inserting in list\n");
 		update_workers(1, name);
@@ -119,6 +124,8 @@ void release_workers(char* host, int qtd) {
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i > qtd; i--) {
 		node = remove_worker();
+		if (strcmp(node, token_start) == 0)
+			token_start = NULL;
 		fprintf(stderr, "%ld removing worker %s\n", time_millis(), node);
 		size = sizeof(node);
 		write(sock, &size, sizeof(int));
@@ -153,6 +160,8 @@ void* monitoring(void* arg) {
 		} else if (diff < 0) {
 			release_workers(host_name, diff);
 		}
+		if (token_start == NULL)
+			send_worker(workers->name, 0, NULL);
 	}
 	return 0;
 }
@@ -178,7 +187,7 @@ void *handle_request(void *arg) {
 	int data;
 	long st, et;
 	worker = next_worker();
-	fprintf(stderr, "%ld handling to %s\n", time_millis(),  worker);
+	fprintf(stderr, "%ld handling to %s\n", time_millis(), worker);
 	arrival();
 	st = time_millis();
 	read(connfd, &data, sizeof(data));
@@ -189,7 +198,7 @@ void *handle_request(void *arg) {
 	write(connfd, &data, sizeof(data));
 	et = time_millis();
 	departure();
-	fprintf(stdout, "%ld %ld %s %d\n", st, et-st, worker, connfd);
+	fprintf(stdout, "%ld %ld %s %d\n", st, et - st, worker, connfd);
 	fflush(stdout);
 	return NULL ;
 }

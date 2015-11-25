@@ -17,7 +17,6 @@ Linked_list *tail = NULL;
 sem_t *sem_work;
 char *hostname;
 int counter;
-int is_first;
 pthread_mutex_t m_peers;
 
 void enqueue_requests(int listen) {
@@ -32,12 +31,13 @@ void enqueue_requests(int listen) {
 void synchronize(int serialize, char *port) {
 	int units, serverfd;
 	Linked_list *node;
-	if (tail == NULL)
+	if (tail == NULL )
 		return;
 	node = tail->next;
 	//iterate(hosts);
 	do { //while (strcmp(hostname, hosts->name) != 0) {
-		fprintf(stderr, "%ld synch %d %s\n", time_millis(), serialize, node->name);
+		fprintf(stderr, "%ld synch %d %s\n", time_millis(), serialize,
+				node->name);
 		if (serialize)
 			sem_wait(sem_work);
 		serverfd = connectTo(node->name, port);
@@ -66,8 +66,9 @@ void* process_requests(void *arg) {
 		fprintf(stderr, "%ld replying %d\n", time_millis(), sock);
 		write(sock, &units, sizeof(int));
 		et = time_millis();
-		fprintf(stdout, "%d %ld %ld %d\n", counter, st, et-st, sock);
+		fprintf(stdout, "%d %ld %ld %d\n", counter, st, et - st, sock);
 	}
+	return 0;
 }
 
 void receive_sync(int serialize, char* port, int time) {
@@ -87,7 +88,8 @@ void receive_sync(int serialize, char* port, int time) {
 			return;
 		} else {
 			if (pid == -1)
-				fprintf(stderr, "%ld ERROR creating process: %d\n", time_millis(), errno);
+				fprintf(stderr, "%ld ERROR creating process: %d\n",
+						time_millis(), errno);
 		}
 	}
 }
@@ -105,23 +107,31 @@ void* manage_peers(void* arg) {
 	int action, size;
 	char* name;
 	read(sock, &action, sizeof(int));
-	read(sock, &size, sizeof(int));
-	name = malloc(size);
-	read(sock, name, size);
-	close(sock);
-	pthread_mutex_lock(&m_peers);
-	if (action > 0) {
-		add_peer(name);
+	if (action == 0) {
+		sem_post(sem_work);
 	} else {
-		if (strcmp(hostname, name) == 0) {
-			fprintf(stderr, "%ld going back to pool. destroying my peers list\n", time_millis());
-			destroyList(tail);
+		read(sock, &size, sizeof(int));
+		name = malloc(size);
+		read(sock, name, size);
+		pthread_mutex_lock(&m_peers);
+		if (action > 0) {
+			add_peer(name);
 		} else {
-			fprintf(stderr, "%ld removing %s from my peers\n", time_millis(), name);
-			removeNode(name, tail);
+			if (strcmp(hostname, name) == 0) {
+				fprintf(stderr,
+						"%ld going back to pool. destroying my peers list\n",
+						time_millis());
+				destroyList(tail);
+			} else {
+				fprintf(stderr, "%ld removing %s from my peers\n",
+						time_millis(), name);
+				removeNode(name, tail);
+			}
 		}
 	}
+	close(sock);
 	pthread_mutex_unlock(&m_peers);
+	return 0;
 }
 
 void* manage_peers_listen(void* arg) {
@@ -132,6 +142,7 @@ void* manage_peers_listen(void* arg) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		pthread_create(&t1, NULL, manage_peers, (void*) connfd);
 	}
+	return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -154,14 +165,16 @@ int main(int argc, char *argv[]) {
 	hostname = malloc(8);
 	gethostname(hostname, 8);
 
+	sem_work = createsemaphore("/sem_work", 0);
 	if (argc > 4) {
 		peers = argv[4];
 		//starts a circular liked list from peers
 		token = strtok(peers, ",");
 		tail = createCircularList(token);
 
-		is_first = strcmp(hostname, token) ? 0 : 1;
-		sem_work = createsemaphore("/sem_work", is_first);
+		//if this is the first worker in the list, it gets the synchronization token
+		if (strcmp(hostname, token) == 0)
+			sem_post(sem_work);
 
 		//fill a circular liked list with node names from peers
 		token = strtok(NULL, ",");
