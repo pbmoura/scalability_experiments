@@ -33,7 +33,7 @@ void synchronize(int units) {
 	node = tail->next;
 	//iterate(hosts);
 	do { //while (strcmp(hostname, hosts->name) != 0) {
-		fprintf(stderr, "%ld synch %d %s\n", time_millis(), node->name);
+		fprintf(stderr, "%ld synch %d %s\n", time_millis(), units, node->name);
 		serverfd = connectTo(node->name, PORT_SER);
 		write(serverfd, &units, sizeof(int));
 		read(serverfd, &units, sizeof(int));
@@ -75,6 +75,7 @@ void receive_sync(int serialize, char* port, int time) {
 		if (!(pid = fork())) {
 			sem_wait(sem_work);
 			read(connfd, &units, sizeof(units));
+			fprintf(stderr, "%ld receiving sync %d\n", time_millis(), units);
 			usleep(time);
 			write(connfd, &units, sizeof(units));
 			sem_post(sem_work);
@@ -162,17 +163,16 @@ int main(int argc, char *argv[]) {
 		peers = argv[5];
 		//starts a circular liked list from peers
 		token = strtok(peers, ",");
-		tail = createCircularList(token);
 
 		//fill a circular liked list with node names from peers
-		token = strtok(NULL, ",");
 		while (token != NULL ) {
-			tail = insertAfter(token, tail);
+			if (strcmp(token, hostname) != 0)
+				add_peer(token);
 			token = strtok(NULL, ",");
 		}
 
 		//finds the position of this node in the list
-		hosts = tail;
+		/*hosts = tail;
 		do { //while (strcmp(hostname, hosts->name) != 0) {
 			if (strcmp(hosts->next->name, hostname) == 0) {
 				fprintf(stderr, "removing hostname from peers list\n");
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
 			iterate(hosts);
 			//}
 		} while (hosts != tail);
-		fprintf(stderr, "Found hostname %s\n", hosts->name);
+		fprintf(stderr, "Found hostname %s\n", hosts->name);*/
 	} else {
 
 	}

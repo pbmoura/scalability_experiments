@@ -23,7 +23,7 @@ file.write('#!/bin/bash\n')
 for i in range(iter_from,iter_to):
   params[0] = (i)*step_0
   params[3] = (i)*step_3
-  format = tuple(params)+(i, output_file,)
-  file.write('./run %i %i %i %i %i %i %i %s\n' % format )
+  format = tuple(params)+(output_file,)
+  file.write('./run %i %i %i %i %i %i %s\n' % format )
 file.close()
 os.chmod(file_name, stat.S_IRWXU)
