@@ -1,9 +1,8 @@
 #include "common.c"
 
 int main(int argc, char* argv[]) {
-	int units = atoi(argv[1]);
-	char* load_balancer = argv[2];
-	char* file_name = argv[3];
+	char* load_balancer = argv[1];
+	char* file_name = argv[2];
 	int sock, counter = 0, i, reply;
 	FILE *fd;
 	unsigned long delay;
@@ -22,8 +21,8 @@ int main(int argc, char* argv[]) {
 		if (!fork()) {
 			st = time_millis();
 			sock = connectTo(load_balancer, PORT_LB);
-			write(sock, &units, sizeof(units));
-			read(sock, &reply, sizeof(reply));
+			write(sock, &counter, sizeof(int));
+			read(sock, &reply, sizeof(int));
 			close(sock);
 			duration = time_millis() - st;
 			printf("%ld %lu %ld %d\n", st, delay, duration, reply);
