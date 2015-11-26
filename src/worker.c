@@ -2,6 +2,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <pthread.h>
+#include <math.h>
 
 #include "common.c"
 #include "Queue.c"
@@ -18,6 +19,7 @@ sem_t *sem_work;
 char *hostname;
 int counter;
 pthread_mutex_t m_peers;
+long task_time_micro;
 
 void enqueue_requests(int listen) {
 	int sock;
@@ -60,13 +62,13 @@ void* process_requests(void *arg) {
 		//contention - linear increase
 		synchronize(0, PORT_SER);
 		//task execution
-		usleep(units * 1000);
+		usleep(task_time_micro);
 		//coherency - quadratic increase
 		//synchronize(1, PORT_PAR);
 		fprintf(stderr, "%ld replying %d\n", time_millis(), sock);
 		write(sock, &units, sizeof(int));
 		et = time_millis();
-		fprintf(stdout, "%d %ld %ld %d\n", counter, st, et - st, sock);
+		fprintf(stdout, "%ld %ld %d %d\n", st, et - st, units, sock);
 	}
 	return 0;
 }
@@ -150,6 +152,7 @@ int main(int argc, char *argv[]) {
 	int contention = atoi(argv[1]) * 1000;
 	int coherency = atoi(argv[2]) * 1000;
 	int n_processes = atoi(argv[3]);
+	double s1 = atof(argv[4]);
 	char *peers;
 	int listenfd = 0, connfd = 0;
 	int i, units;
@@ -159,6 +162,8 @@ int main(int argc, char *argv[]) {
 	pid_t pid;
 	pthread_t t1, t2;
 
+	task_time_micro = lrint(s1 * 1000000);
+
 	Q = createQueue(50);
 	pthread_mutex_init(&m_peers, NULL );
 
@@ -167,8 +172,8 @@ int main(int argc, char *argv[]) {
 	gethostname(hostname, 8);
 
 	sem_work = createsemaphore("/sem_work", 0);
-	if (argc > 4) {
-		peers = argv[4];
+	if (argc > 5) {
+		peers = argv[5];
 		//starts a circular liked list from peers
 		token = strtok(peers, ",");
 		tail = createCircularList(token);
