@@ -9,7 +9,6 @@ int num_workers = 0;
 Linked_list *workers = NULL;
 sem_t *sem_load, *sem_workers;
 double contention, coherency, s1, x1;
-char* token_start;
 
 double service_time(int w) { //w is the number of workers
 	double n = (double) w;
@@ -69,8 +68,6 @@ void add_worker(char* name) {
 	if (workers == NULL ) {
 		fprintf(stderr, "creating list\n");
 		workers = createCircularList(name);
-		send_worker(name, 0, NULL);
-		token_start = name;
 	} else {
 		fprintf(stderr, "inserting in list\n");
 		update_workers(1, name);
@@ -124,8 +121,6 @@ void release_workers(char* host, int qtd) {
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i > qtd; i--) {
 		node = remove_worker();
-		if (strcmp(node, token_start) == 0)
-			token_start = NULL;
 		fprintf(stderr, "%ld removing worker %s\n", time_millis(), node);
 		size = sizeof(node);
 		write(sock, &size, sizeof(int));
@@ -160,13 +155,7 @@ void* monitoring(void* arg) {
 			request_workers(host_name, diff);
 		} else if (diff < 0) {
 			release_workers(host_name, diff);
-			if (token_start == NULL) {
-				token_start = workers->name;
-				send_worker(token_start, 0, NULL);
-			}
 		}
-		if (token_start == NULL)
-			send_worker(workers->name, 0, NULL);
 	}
 	return 0;
 }
