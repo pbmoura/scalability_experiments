@@ -10,9 +10,7 @@
 
 Queue *Q;
 Linked_list *tail = NULL;
-sem_t *sem_work;
 char *hostname;
-int counter;
 pthread_mutex_t m_peers;
 long task_time_micro;
 
@@ -25,7 +23,7 @@ void enqueue_requests(int listen) {
 	}
 }
 
-void synchronize(int units) {
+void synchronize(int hops) {
 	int serverfd;
 	Linked_list *node;
 	if (tail == NULL )
@@ -33,39 +31,42 @@ void synchronize(int units) {
 	node = tail->next;
 	//iterate(hosts);
 	do { //while (strcmp(hostname, hosts->name) != 0) {
-		fprintf(stderr, "%ld synch %d %s\n", time_millis(), units, node->name);
-		serverfd = connectTo(node->name, PORT_SER);
-		write(serverfd, &units, sizeof(int));
-		read(serverfd, &units, sizeof(int));
+		fprintf(stderr, "%ld synch %d %s\n", time_millis(), hops, node->name);
+		serverfd = connectTo(node->name, PORT_SYN);
+		write(serverfd, &hops, sizeof(int));
+		read(serverfd, &hops, sizeof(int));
 		close(serverfd);
 		iterate(node);
 	} while (node != tail);
 }
 
 void* process_requests(void *arg) {
-	int i, sock, units, sem_value;
+	int i, sock, data, sem_value;
 	long st, et;
 	while (1) {
 		fprintf(stderr, "%ld process_request\n", time_millis());
 		DequeueElement(Q, &sock);
 		fprintf(stderr, "%ld processing %d\n", time_millis(), sock);
 		st = time_millis();
-		read(sock, &units, sizeof(units));
-		fprintf(stderr, "%ld read %d\n", time_millis(), units);
+		read(sock, &data, sizeof(data));
+		fprintf(stderr, "%ld read %d\n", time_millis(), data);
+		//contention
+		synchronize(1);
 		//task execution
 		usleep(task_time_micro);
-		synchronize(units);
+		//coherency
+		synchronize(2);
 		fprintf(stderr, "%ld replying %d\n", time_millis(), sock);
-		write(sock, &units, sizeof(int));
+		write(sock, &data, sizeof(int));
 		et = time_millis();
-		fprintf(stdout, "%ld %ld %d %d\n", st, et - st, units, sock);
+		fprintf(stdout, "%ld %ld %d %d\n", st, et - st, data, sock);
 		fflush(stdout);
 	}
 	return 0;
 }
 
 void receive_sync(int serialize, char* port, int time) {
-	int listenfd = 0, connfd = 0, units;
+	int listenfd = 0, connfd = 0, hops;
 	pid_t pid;
 
 	socketlisten(&listenfd, atoi(port));
@@ -73,12 +74,12 @@ void receive_sync(int serialize, char* port, int time) {
 	while (1) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		if (!(pid = fork())) {
-			sem_wait(sem_work);
-			read(connfd, &units, sizeof(units));
-			fprintf(stderr, "%ld receiving sync %d\n", time_millis(), units);
+			read(connfd, &hops, sizeof(hops));
+			fprintf(stderr, "%ld receiving sync %d\n", time_millis(), hops);
 			usleep(time);
-			write(connfd, &units, sizeof(units));
-			sem_post(sem_work);
+			if (hops > 1)
+				synchronize(hops-1);
+			write(connfd, &hops, sizeof(hops));
 			return;
 		} else {
 			if (pid == -1)
@@ -158,7 +159,6 @@ int main(int argc, char *argv[]) {
 	hostname = malloc(8);
 	gethostname(hostname, 8);
 
-	sem_work = createsemaphore("/sem_work", 1);
 	if (argc > 5) {
 		peers = argv[5];
 		//starts a circular liked list from peers
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
 	fflush(stdout);
 	if (fork()) {
 		//receives connections from peers
-		receive_sync(0, PORT_SER, contention);
+		receive_sync(0, PORT_SYN, contention);
 	} else {
 		//receives connections from load balancer
 		pthread_create(&t1, NULL, manage_peers_listen, NULL );

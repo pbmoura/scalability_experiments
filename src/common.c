@@ -7,8 +7,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-#define PORT_PAR "8890"
-#define PORT_SER "8889"
+#define PORT_SYN "8889"
 #define PORT "8888"
 #define PORT_LB "8887"
 #define PORT_PM "8886"
