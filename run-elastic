@@ -29,9 +29,9 @@ do
   sleep 5
   echo "searching pool manager node"
   if [ "$6" == "1" ]; then
-    poolmanager=`preserve -llist | grep $USER | awk '{if ($7 == "r") print $0}' |grep -v $NODES | cut -f 9`
+    poolmanager=`preserve -llist | grep $USER | awk '{if ($7 == "R") print $0}' |grep -v $NODES | cut -f 9`
   else
-    poolmanager=`preserve -llist | grep $USER | awk '{if ($7 == "r" && $8 == "1") print $0}' | cut -f 9`
+    poolmanager=`preserve -llist | grep $USER | awk '{if ($7 == "R" && $8 == "1") print $0}' | cut -f 9`
   fi
 done
 echo "it is " $poolmanager
@@ -46,9 +46,9 @@ do
   sleep 5
   echo "searching load balacner node"
   if [ "$6" == "1" ]; then
-    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "r") print $0}' | grep -v $poolmanager | grep -v $NODES | cut -f 9`
+    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "R") print $0}' | grep -v $poolmanager | grep -v $NODES | cut -f 9`
   else    
-    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "r" && $8 == "1") print $0}' | grep -v $poolmanager | cut -f 9`
+    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "R" && $8 == "1") print $0}' | grep -v $poolmanager | cut -f 9`
   fi
 done
 echo "it is " $loadbalancer
