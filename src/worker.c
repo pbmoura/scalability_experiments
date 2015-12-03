@@ -12,7 +12,7 @@ Queue *Q;
 Linked_list *tail = NULL;
 char *hostname;
 pthread_mutex_t m_peers;
-long task_time_micro;
+long task_time_micro, contention_time_micro, coherency_time_micro;
 
 void enqueue_requests(int listen) {
 	int sock;
@@ -23,7 +23,7 @@ void enqueue_requests(int listen) {
 	}
 }
 
-void synchronize(int hops) {
+void synchronize(int hops, char* port) {
 	int serverfd;
 	Linked_list *node;
 	if (tail == NULL )
@@ -32,11 +32,11 @@ void synchronize(int hops) {
 	//iterate(hosts);
 	do { //while (strcmp(hostname, hosts->name) != 0) {
 		fprintf(stderr, "%ld synch %d %s\n", time_millis(), hops, node->name);
-		serverfd = connectTo(node->name, PORT_SYN);
+		serverfd = connectTo(node->name, port);
 		write(serverfd, &hops, sizeof(int));
 		read(serverfd, &hops, sizeof(int));
 		close(serverfd);
-		iterate(node);
+		node = node->next;
 	} while (node != tail);
 }
 
@@ -51,11 +51,11 @@ void* process_requests(void *arg) {
 		read(sock, &data, sizeof(data));
 		fprintf(stderr, "%ld read %d\n", time_millis(), data);
 		//contention
-		synchronize(1);
+		synchronize(1, PORT_SER);
 		//task execution
 		usleep(task_time_micro);
 		//coherency
-		synchronize(2);
+		synchronize(2, PORT_PAR);
 		fprintf(stderr, "%ld replying %d\n", time_millis(), sock);
 		write(sock, &data, sizeof(int));
 		et = time_millis();
@@ -65,7 +65,7 @@ void* process_requests(void *arg) {
 	return 0;
 }
 
-void receive_sync(int serialize, char* port, int time) {
+void receive_sync(char* port, long sync_time) {
 	int listenfd = 0, connfd = 0, hops;
 	pid_t pid;
 
@@ -76,9 +76,13 @@ void receive_sync(int serialize, char* port, int time) {
 		if (!(pid = fork())) {
 			read(connfd, &hops, sizeof(hops));
 			fprintf(stderr, "%ld receiving sync %d\n", time_millis(), hops);
-			usleep(time);
-			if (hops > 1)
-				synchronize(hops-1);
+			usleep(sync_time);
+			if (hops > 1) {
+				//usleep(coherency_time_micro);
+				synchronize(hops-1, port);
+			} /*else {
+				usleep(contention_time_micro);
+			}*/
 			write(connfd, &hops, sizeof(hops));
 			return;
 		} else {
@@ -137,8 +141,8 @@ void* manage_peers_listen(void* arg) {
 }
 
 int main(int argc, char *argv[]) {
-	int contention = atoi(argv[1]) * 1000;
-	int coherency = atoi(argv[2]) * 1000;
+	double contention = atof(argv[1]);
+	double coherency = atof(argv[2]);
 	int n_processes = atoi(argv[3]);
 	double s1 = atof(argv[4]);
 	char *peers;
@@ -151,6 +155,8 @@ int main(int argc, char *argv[]) {
 	pthread_t t1, t2;
 
 	task_time_micro = lrint(s1 * 1000000);
+	contention_time_micro = lrint(task_time_micro * contention);
+	coherency_time_micro = lrint(task_time_micro * coherency);
 
 	Q = createQueue(50);
 	pthread_mutex_init(&m_peers, NULL );
@@ -190,7 +196,10 @@ int main(int argc, char *argv[]) {
 	fflush(stdout);
 	if (fork()) {
 		//receives connections from peers
-		receive_sync(0, PORT_SYN, contention);
+		if (fork())
+			receive_sync(PORT_SER, contention_time_micro);
+		else
+			receive_sync(PORT_PAR, coherency_time_micro);
 	} else {
 		//receives connections from load balancer
 		pthread_create(&t1, NULL, manage_peers_listen, NULL );
