@@ -8,7 +8,15 @@ int load = 0;
 int num_workers = 0;
 Linked_list *workers = NULL;
 sem_t *sem_load, *sem_workers;
-double contention, coherency, s1, x1;
+double contention, coherency, s1, x1, max_throughput, max_workers;
+
+int usl_peak() {
+	return lrint(sqrt((1-contention)/coherency));
+}
+
+double usl(int n) {
+	return n/(1 + contention*(n-1) + n*coherency*(n-1));
+}
 
 double service_time(int w) { //w is the number of workers
 	double n = (double) w;
@@ -22,11 +30,15 @@ double arrival_rate(int current_load, double service_time) { //t is the service 
 }
 
 double estimate_workers(double x) { //x is required throughput
-	double c = (x / x1);
-	double delta = pow(contention - coherency - 1 / c, 2.0)
+	double w, delta, c = (x / x1);
+	if (x >= max_throughput)
+		w = max_workers;
+	else {
+		delta = pow(contention - coherency - 1 / c, 2.0)
 			- 4 * coherency * (1 - contention);
-	double w = (-contention + coherency + 1 / c - sqrt(delta))
+		w = (-contention + coherency + 1 / c - sqrt(delta))
 			/ (2 * coherency);
+	}
 	//printf("estimate workers for %f\n", x);
 	return floor(w * 10) / 10;
 }
@@ -206,6 +218,9 @@ int main(int argc, char *argv[]) {
 
 	int listenfd = 0, connfd = 0;
 	pthread_t t_mon, t_req;
+
+	max_workers = usl_peak();
+	max_throughput = usl(max_workers);
 
 	sem_load = createsemaphore("/sem_load", 1);
 	sem_workers = createsemaphore("/sem_workers", 1);
