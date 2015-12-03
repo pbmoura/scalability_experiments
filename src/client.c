@@ -5,11 +5,12 @@
 int main(int argc, char *argv[]) {
 	int clients = atoi(argv[1]); //simultaneous clients
 	int requests = atoi(argv[2]); // requests per client
-	double st = atof(argv[3]) * 1000000;   //workload per request
+	char* st = argv[3];   //workload per request. just to print
 	char* load_balancer = argv[4]; //name of the node that must receive the requests
-	int workers_n = atoi(argv[5]);  //number of workers. not used. just to print
-	int workers_p = atoi(argv[6]); //not user. just to print
-	int contention = atoi(argv[7]); //not user. just to print
+	char* workers_n = argv[5];  //number of workers. not used. just to print
+	char* workers_p = argv[6]; //not user. just to print
+	char* contention = argv[7]; //not user. just to print
+	char* coherency = argv[8];
 	int sock; //socket descriptor
 	int msg, reply; //reply from load balancer
 	int i, j; //loop iterators
@@ -32,8 +33,8 @@ int main(int argc, char *argv[]) {
 				read(sock, &reply, sizeof(int));
 				close(sock);
 				elapsed_time = time_millis() - start_time;
-				printf("%d %d %d %d %d %d %d %d %ld %ld\n", i + 1, j + 1,
-						requests, st, workers_n, workers_p, contention, elapsed_time, start_time);
+				printf("%d %d %d %s %s %s %s %s %ld %ld\n", i + 1, j + 1,
+						requests, st, workers_n, workers_p, contention, coherency, elapsed_time, start_time);
 			}
 			return 0;
 		} else {

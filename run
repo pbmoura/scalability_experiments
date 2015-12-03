@@ -1,7 +1,6 @@
 #!/bin/bash
-#clients requests units workers contention coherency counter log_file
-#clients requests service_time workers worker_processes contention log_file
-echo params $1 $2 $3 $4 $5 $6 $7
+#clients requests service_time workers worker_processes contention coherency log_file
+echo params $1 $2 $3 $4 $5 $6 $7 $8
 mkdir -p logs
 mkdir -p results
 echo "starting workers"
@@ -17,29 +16,29 @@ done
 echo $NODES
 #echo $1 $2 $3 $4 $6 `date` >> logs/$8.worker-`hostname`
 #echo "#" $1 $2 $3 $4 $6 `date` >> results/$8.worker-`hostname`
-prun -np $4 -reserve $RESERVATION ./worker.sh $6 0 $5 $3 $NODES $7 &
+prun -np $4 -reserve $RESERVATION ./worker.sh $6 $7 $5 $3 $NODES $8 &
 sleep 5
 echo "starting load balancer"
-echo $1 $2 $3 $4 $5 $6 `date` >> logs/$7.lb
-echo $1 $2 $3 $4 $5 $6 `date` >> results/$7.lb
-prun -np 1 ./loadbalancer.sh $4 $NODES $1 $7 &
+echo $1 $2 $3 $4 $5 $6 $7 `date` >> logs/$8.lb
+echo $1 $2 $3 $4 $5 $6 $7 `date` >> results/$8.lb
+prun -np 1 ./loadbalancer.sh $4 $NODES $1 $8 &
 loadbalancer=""
 while ((`echo $loadbalancer|wc -c` <= 1))
 do
   sleep 5
   echo "searching load balacner node"
   if [ "$4" == "1" ]; then
-    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "r") print $0}' | grep -v $NODES | cut -f 9`
+    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "R") print $0}' | grep -v $NODES | cut -f 9`
   else    
-    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "r" && $8 == "1") print $0}' | cut -f 9`
+    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "R" && $8 == "1") print $0}' | cut -f 9`
   fi
 done
 echo "it is " $loadbalancer
 sleep 5
-echo $1 $2 $3 $loadbalancer $4 $5 $6 `date` >> logs/$7.client
-echo "#" $1 $2 $3 $4 $5 $6 `date` >> results/$7.client
+echo $1 $2 $3 $loadbalancer $4 $5 $6 $7 `date` >> logs/$8.client
+echo "#" $1 $2 $3 $4 $5 $6 $7 `date` >> results/$8.client
 echo "starting client"
-prun -np 1 ./client.sh $1 $2 $3 $loadbalancer $4 $5 $6 $7
+prun -np 1 ./client.sh $1 $2 $3 $loadbalancer $4 $5 $6 $7 $8
 echo "killing all"
 killall prun > /dev/null
 preserve -c $RESERVATION
