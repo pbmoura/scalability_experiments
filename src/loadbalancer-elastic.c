@@ -20,26 +20,28 @@ double usl(int n) {
 
 double service_time(int w) { //w is the number of workers
 	double n = (double) w;
-	//fprintf(stderr,"service time for %d\n", w);
+	fprintf(stderr,"service time for %d\n", w);
 	return s1 + s1 * contention * (n - 1) + s1 * coherency * n * (n - 1);
 }
 
 double arrival_rate(int current_load, double service_time) { //t is the service time
-	//fprintf(stderr,"arrival rate for %d %f\n", current_load, service_time);
+	fprintf(stderr,"arrival rate for %d %f\n", current_load, service_time);
 	return current_load / service_time;
 }
 
 double estimate_workers(double x) { //x is required throughput
 	double w, delta, c = (x / x1);
-	if (x >= max_throughput)
+	fprintf(stderr, "workers estimate for %f\n", x);
+	if (x >= max_throughput) {
+		fprintf(stderr, "load exceeds limit\n");
 		w = max_workers;
-	else {
+	} else {
 		delta = pow(contention - coherency - 1 / c, 2.0)
 			- 4 * coherency * (1 - contention);
 		w = (-contention + coherency + 1 / c - sqrt(delta))
 			/ (2 * coherency);
 	}
-	//printf("estimate workers for %f\n", x);
+	fprintf(stderr, "estimating %f workers with delta %f\n", w, delta);
 	return floor(w * 10) / 10;
 }
 
@@ -60,7 +62,7 @@ void update_workers(int action, char* node) {
 	iterator = workers;
 	do {
 		send_worker(iterator->name, action, node);
-		iterate(iterator);
+		iterate(&iterator);
 	} while (iterator != workers);
 }
 
@@ -70,7 +72,7 @@ void send_workers(char* node) {
 	iterator = workers;
 	do {
 		send_worker(node, 1, iterator->name);
-		iterate(iterator);
+		iterate(&iterator);
 	} while (iterator != workers);
 }
 
@@ -103,7 +105,7 @@ char* remove_worker() {
 char* next_worker() {
 	sem_wait(sem_workers);
 	char* name = workers->name;
-	iterate(workers);
+	iterate(&workers);
 	sem_post(sem_workers);
 	return name;
 }
@@ -221,6 +223,7 @@ int main(int argc, char *argv[]) {
 
 	max_workers = usl_peak();
 	max_throughput = usl(max_workers);
+	fprintf(stderr, "limit of %f workers at %f req/s\n", max_workers, max_throughput);
 
 	sem_load = createsemaphore("/sem_load", 1);
 	sem_workers = createsemaphore("/sem_workers", 1);

@@ -29,14 +29,14 @@ void synchronize(int hops, char* port) {
 	if (tail == NULL )
 		return;
 	node = tail->next;
-	//iterate(hosts);
 	do { //while (strcmp(hostname, hosts->name) != 0) {
 		fprintf(stderr, "%ld synch %d %s\n", time_millis(), hops, node->name);
 		serverfd = connectTo(node->name, port);
 		write(serverfd, &hops, sizeof(int));
 		read(serverfd, &hops, sizeof(int));
 		close(serverfd);
-		node = node->next;
+		//node = node->next;
+		iterate(&node);
 	} while (node != tail);
 }
 

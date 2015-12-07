@@ -26,8 +26,8 @@ Linked_list* createCircularList(char* name) {
 	return list;
 }
 
-void iterate(Linked_list* list) {
-	list = list->next;
+void iterate(Linked_list** list) {
+	*list = (*list)->next;
 }
 
 Linked_list* removeNext(Linked_list* list) {
@@ -46,7 +46,7 @@ Linked_list* removeNode(char* name, Linked_list *list) {
 		if(strcmp(iterator->next->name, name) == 0) {
 			return removeNext(iterator);
 		}
-		iterate(iterator);
+		iterate(&iterator);
 	}
 	return NULL;
 }
@@ -55,7 +55,7 @@ void destroyList(Linked_list *list) {
 	Linked_list *node;
 	while(list != NULL) {
 		node = list;
-		iterate(list);
+		iterate(&list);
 		free(node);
 	}
 }
