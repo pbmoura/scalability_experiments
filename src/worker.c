@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
 	contention_time_micro = lrint(task_time_micro * contention);
 	coherency_time_micro = lrint(task_time_micro * coherency);
 
-	Q = createQueue(50);
+	Q = createQueue(50, sizeof(int));
 	pthread_mutex_init(&m_peers, NULL );
 
 //get hostname

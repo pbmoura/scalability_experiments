@@ -1,6 +1,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<pthread.h>
+#include<semaphore.h>
+#include<fcntl.h>
 
 typedef struct Queue
 {
@@ -8,22 +10,24 @@ typedef struct Queue
         int size;
         int front;
         int rear;
-        long *elements;
+        void *elements;
+	size_t element_size;
 
 	pthread_mutex_t mutex;
 	sem_t *sem;
 }Queue;
 
-Queue * createQueue(int maxElements)
+Queue * createQueue(int maxElements, size_t elementSize)
 {
 	char *sem_name;
         Queue *Q;
         Q = (Queue *)malloc(sizeof(Queue));
-        Q->elements = (long *)malloc(sizeof(long)*maxElements);
+        Q->elements = malloc(elementSize * maxElements);
         Q->size = 0;
         Q->capacity = maxElements;
         Q->front = 0;
         Q->rear = -1;
+	Q->element_size = elementSize;
 
 	sem_name = malloc(23);
 	sprintf(sem_name, "/s%ld", (long)Q);
@@ -39,7 +43,7 @@ void Dequeue(Queue *Q)
 {
         if(Q->size==0)
         {
-                printf("Queue is Empty\n");
+                fprintf(stderr, "Queue is Empty\n");
                 return;
         }
         else
@@ -53,16 +57,22 @@ void Dequeue(Queue *Q)
         }
         return;
 }
-long front(Queue *Q)
+void *elementAt(Queue *Q, int offset)
+{
+	return Q->elements + offset * Q->element_size;
+}
+void *front(Queue *Q)
 {
         if(Q->size==0)
         {
                 printf("Queue is Empty\n");
                 exit(0);
         }
-        return Q->elements[Q->front];
+        //return Q->elements[Q->front];
+        //return Q->elements + Q->front * Q->element_size;
+        return elementAt(Q, Q->front);
 }
-void DequeueElement(Queue *Q, long *element)
+void DequeueElement(Queue *Q, void** element)
 {
 	sem_wait(Q->sem);
 	pthread_mutex_lock(&(Q->mutex));
@@ -70,11 +80,12 @@ void DequeueElement(Queue *Q, long *element)
 	Dequeue(Q);
 	pthread_mutex_unlock(&(Q->mutex));
 }
-void Enqueue(Queue *Q, long element)
+void Enqueue(Queue *Q, void* element)
 {
+	void** head;
         if(Q->size == Q->capacity)
         {
-                printf("Queue is Full\n");
+                fprintf(stderr, "Queue is Full\n");
         }
         else
         {
@@ -85,7 +96,9 @@ void Enqueue(Queue *Q, long element)
                 {
                         Q->rear = 0;
                 }
-                Q->elements[Q->rear] = element;
+		head = elementAt(Q, Q->rear);
+		*head = element;
+                //Q->elements[Q->rear] = element;
 		pthread_mutex_unlock(&(Q->mutex));
 		sem_post(Q->sem);
         }
