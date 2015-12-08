@@ -61,7 +61,7 @@ void update_workers(int action, char* node) {
 
 	iterator = workers;
 	do {
-		send_worker(iterator->name, action, node);
+		send_worker(iterator->value, action, node);
 		iterate(&iterator);
 	} while (iterator != workers);
 }
@@ -71,7 +71,7 @@ void send_workers(char* node) {
 
 	iterator = workers;
 	do {
-		send_worker(node, 1, iterator->name);
+		send_worker(node, 1, iterator->value);
 		iterate(&iterator);
 	} while (iterator != workers);
 }
@@ -96,15 +96,15 @@ char* remove_worker() {
 	Linked_list *node;
 	sem_wait(sem_workers);
 	node = removeNext(workers);
-	update_workers(-1, node->name);
+	update_workers(-1, node->value);
 	num_workers--;
 	sem_post(sem_workers);
-	return node->name;
+	return node->value;
 }
 
 char* next_worker() {
 	sem_wait(sem_workers);
-	char* name = workers->name;
+	char* name = workers->value;
 	iterate(&workers);
 	sem_post(sem_workers);
 	return name;
@@ -190,7 +190,7 @@ void departure() {
 
 void *handle_request(void *arg) {
 	int sock = 0;
-	int connfd = (int) arg;
+	int connfd =  *((int*)arg);
 	char *worker;
 	int data;
 	long st, et;
@@ -237,6 +237,6 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		//fprintf(stderr, "accepted\n");
-		pthread_create(&t_req, NULL, handle_request, (void *) connfd);
+		pthread_create(&t_req, NULL, handle_request, (void *) &connfd);
 	}
 }

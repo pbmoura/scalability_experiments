@@ -25,13 +25,15 @@ void enqueue_requests(int listen) {
 
 void synchronize(int hops, char* port) {
 	int serverfd;
+	char* name;
 	Linked_list *node;
 	if (tail == NULL )
 		return;
 	node = tail->next;
 	do { //while (strcmp(hostname, hosts->name) != 0) {
-		fprintf(stderr, "%ld synch %d %s\n", time_millis(), hops, node->name);
-		serverfd = connectTo(node->name, port);
+		name = (char*)node->value;
+		fprintf(stderr, "%ld synch %d %s\n", time_millis(), hops, name);
+		serverfd = connectTo(name, port);
 		write(serverfd, &hops, sizeof(int));
 		read(serverfd, &hops, sizeof(int));
 		close(serverfd);
