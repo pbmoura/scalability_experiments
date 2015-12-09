@@ -64,7 +64,7 @@ void update_workers(int action, char* node) {
 	do {
 		send_worker(((Node*)iterator->value)->name, action, node);
 		iterate(&iterator);
-	} while (iterator != workers);
+	} while (iterator != NULL);
 }
 
 void send_workers(char* node) {
@@ -74,7 +74,7 @@ void send_workers(char* node) {
 	do {
 		send_worker(node, 1, ((Node*)iterator->value)->name);
 		iterate(&iterator);
-	} while (iterator != workers);
+	} while (iterator != NULL);
 }
 
 void add_worker(char* name) {
@@ -103,7 +103,7 @@ char* remove_worker() {
 	node = workers;
 	name = ((Node*)node->value)->name;
 	free(node);
-	iterate(workers);
+	iterate(&workers);
 	update_workers(-1, name);
 	num_workers--;
 	sem_post(sem_workers);
@@ -117,10 +117,12 @@ Node* next_worker() {
 	iterator = workers;
 	node = iterator->value;
 	do {
+		fprintf(stderr, "next_worker loop %i\n", ((Node*)iterator->value)->queue_size);
 		if (((Node*)iterator->value)->queue_size < node->queue_size)
 			node = iterator->value;
-		iterate(iterator);
+		iterate(&iterator);
 	} while (iterator != NULL);
+	fprintf(stderr, "next_worker returning %s %i\n", node->name, node->queue_size);
 	return node;
 }
 
