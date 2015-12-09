@@ -43,11 +43,12 @@ void synchronize(int hops, char* port) {
 }
 
 void* process_requests(void *arg) {
-	int i, sock, data, sem_value;
+	int i, sock, data, sem_value, *sock_p;
 	long st, et;
 	while (1) {
 		fprintf(stderr, "%ld process_request\n", time_millis());
-		DequeueElement(Q, &sock);
+		DequeueElement(Q, (void**)&sock_p);
+		sock = *sock_p;
 		fprintf(stderr, "%ld processing %d\n", time_millis(), sock);
 		st = time_millis();
 		read(sock, &data, sizeof(data));

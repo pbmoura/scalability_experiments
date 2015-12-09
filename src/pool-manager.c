@@ -7,13 +7,14 @@ Queue *nodes;
 void* process_request(void* arg) {
 	int socket = *((int*)arg);
 	int qtd, i, size;
-	char* node;
+	char* node, **node_p;
 	read(socket, &qtd, sizeof(int));
 	fprintf(stderr, "%ld requested %d\n", time_millis(), qtd);
 	if(qtd > 0) {
 		for(i = 0; i<qtd; i++) {
 			fprintf(stderr, "getting node %i\n", i);
-			DequeueElement(nodes, (void*)&node);
+			DequeueElement(nodes, (void*)&node_p);
+			node = *node_p;
 			fprintf(stderr, "got %s\n", node);
 			size = sizeof(node);
 			write(socket, &size, sizeof(int));
