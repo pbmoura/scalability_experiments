@@ -3,6 +3,7 @@
 #include <math.h>
 #include "common.c"
 #include "Linked_list.c"
+#include "Node.c"
 
 int load = 0;
 int num_workers = 0;
@@ -61,7 +62,7 @@ void update_workers(int action, char* node) {
 
 	iterator = workers;
 	do {
-		send_worker(iterator->value, action, node);
+		send_worker(((Node*)iterator->value)->name, action, node);
 		iterate(&iterator);
 	} while (iterator != workers);
 }
@@ -71,22 +72,24 @@ void send_workers(char* node) {
 
 	iterator = workers;
 	do {
-		send_worker(node, 1, iterator->value);
+		send_worker(node, 1, ((Node*)iterator->value)->name);
 		iterate(&iterator);
 	} while (iterator != workers);
 }
 
 void add_worker(char* name) {
+	Node* node = createNode(name);
 	fprintf(stderr, "%ld adding worker %s\n", time_millis(), name);
+
 	sem_wait(sem_workers);
 	if (workers == NULL ) {
 		fprintf(stderr, "creating list\n");
-		workers = createCircularList(name);
+		workers = createList(node, NULL);
 	} else {
 		fprintf(stderr, "inserting in list\n");
 		update_workers(1, name);
 		send_workers(name);
-		workers = insertAfter(name, workers);
+		workers = createList(node, workers);
 	}
 	num_workers++;
 	sem_post(sem_workers);
@@ -94,20 +97,31 @@ void add_worker(char* name) {
 
 char* remove_worker() {
 	Linked_list *node;
+	char* name;
 	sem_wait(sem_workers);
-	node = removeNext(workers);
-	update_workers(-1, node->value);
+	//node = removeNext(workers);
+	node = workers;
+	name = ((Node*)node->value)->name;
+	free(node);
+	iterate(workers);
+	update_workers(-1, name);
 	num_workers--;
 	sem_post(sem_workers);
-	return node->value;
+	return name;
 }
 
-char* next_worker() {
-	sem_wait(sem_workers);
-	char* name = workers->value;
-	iterate(&workers);
-	sem_post(sem_workers);
-	return name;
+Node* next_worker() {
+	Linked_list* iterator;
+	Node* node;
+
+	iterator = workers;
+	node = iterator->value;
+	do {
+		if (((Node*)iterator->value)->queue_size < node->queue_size)
+			node = iterator->value;
+		iterate(iterator);
+	} while (iterator != NULL);
+	return node;
 }
 
 void request_workers(char* host, int qtd) {
@@ -191,22 +205,24 @@ void departure() {
 void *handle_request(void *arg) {
 	int sock = 0;
 	int connfd =  *((int*)arg);
-	char *worker;
+	Node *worker;
 	int data;
 	long st, et;
 	worker = next_worker();
-	fprintf(stderr, "%ld handling to %s\n", time_millis(), worker);
+	fprintf(stderr, "%ld handling to %s\n", time_millis(), worker->name);
 	arrival();
 	st = time_millis();
 	read(connfd, &data, sizeof(data));
-	sock = connectTo(worker, PORT);
+	sock = connectTo(worker->name, PORT);
+	arrivalNode(worker);
 	write(sock, &data, sizeof(data));
 	read(sock, &data, sizeof(data));
+	departureNode(worker);
 	close(sock);
 	write(connfd, &data, sizeof(data));
 	et = time_millis();
 	departure();
-	fprintf(stdout, "%ld %ld %s %d\n", st, et - st, worker, connfd);
+	fprintf(stdout, "%ld %ld %s %d\n", st, et - st, worker->name, connfd);
 	fflush(stdout);
 	return NULL ;
 }
