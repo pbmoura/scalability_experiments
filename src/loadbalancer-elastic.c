@@ -10,6 +10,7 @@ int num_workers = 0;
 Linked_list *workers = NULL;
 sem_t *sem_load, *sem_workers;
 double contention, coherency, s1, x1, max_throughput, max_workers;
+char* pool_manager;
 
 int usl_peak() {
 	return lrint(sqrt((1-contention)/coherency));
@@ -173,19 +174,23 @@ int estimate_num_workers(int current_num_workers, int current_load) {
 	return n;
 }
 
+void verify_num_workers() {
+	int n, diff;
+
+	n = estimate_num_workers(num_workers, load);
+	diff = n - num_workers;
+	if (diff > 0) {
+		request_workers(pool_manager, diff);
+	} else if (diff < 0) {
+		release_workers(pool_manager, diff);
+	}
+}
+
 void* monitoring(void* arg) {
 	char* host_name = (char*) arg;
-	int n, diff;
 	while (1) {
 		usleep(500000);
-		n = estimate_num_workers(num_workers, load);
-		//printf("monitoring %d %d\n", num_workers, n);
-		diff = n - num_workers;
-		if (diff > 0) {
-			request_workers(host_name, diff);
-		} else if (diff < 0) {
-			release_workers(host_name, diff);
-		}
+		verify_num_workers();
 	}
 	return 0;
 }
@@ -193,6 +198,7 @@ void* monitoring(void* arg) {
 void arrival() {
 	sem_wait(sem_load);
 	load++;
+	//verify_num_workers();
 	sem_post(sem_load);
 	fprintf(stderr, "%ld arrival %d %d\n", time_millis(), load, num_workers);
 }
@@ -230,7 +236,7 @@ void *handle_request(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
-	char *pool_manager = argv[1];  //pool manager's hostname
+	pool_manager = argv[1];  //pool manager's hostname
 	contention = atof(argv[2]);
 	coherency = atof(argv[3]);
 	s1 = atof(argv[4]);
