@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
 	pthread_t t_mon, t_req;
 
 	max_workers = usl_peak();
-	max_throughput = usl(max_workers);
+	max_throughput = usl(max_workers) * x1;
 	fprintf(stderr, "limit of %f workers at %f req/s\n", max_workers, max_throughput);
 
 	sem_load = createsemaphore("/sem_load", 1);
