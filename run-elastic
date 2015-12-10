@@ -1,15 +1,15 @@
 #!/bin/bash
-#contention coherency s1 x1 num_processes num_workers trace_file log_file
-if [ "a$8" == "a" ]; then
-  log_file=`echo "$1_$2_$3_$4_$5_$6_$7"`
+#contention coherency s1 x1 num_processes num_workers trace_file sync_time1 sync_time2 log_file
+if [ "a${10}" == "a" ]; then
+  log_file=`echo "$1_$2_$3_$4_$5_$6_$7_$8_$9"`
 else
-  log_file=`echo $8`
+  log_file=`echo ${10}`
 fi
 echo "log_file: " $log_file
 mkdir -p logs
 mkdir -p results
 echo "starting workers"
-prun -np $6 ./worker-elastic.sh $1 $2 $5 $3 $log_file &
+prun -np $6 ./worker-elastic.sh $8 $9 $5 $3 $log_file &
 num=0
 while [ $num != $6 ];
 do
@@ -20,8 +20,8 @@ done
 echo $NODES
 sleep 5
 echo "starting pool manager"
-echo $1 $2 $3 $4 $6 $7 `date` >> logs/$log_file.pm
-echo $1 $2 $3 $4 $6 $7 `date` >> results/$log_file.pm
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> logs/$log_file.pm
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> results/$log_file.pm
 prun -np 1 poolmanager.sh $6 $NODES $log_file &
 poolmanager=""
 while ((`echo $poolmanager|wc -c` <= 1))
@@ -37,8 +37,8 @@ done
 echo "it is " $poolmanager
 
 echo "starting load balancer"
-echo $1 $2 $3 $4 $6 $7 `date` >> logs/$log_file.lb
-echo $1 $2 $3 $4 $6 $7 `date` >> results/$log_file.lb
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> logs/$log_file.lb
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> results/$log_file.lb
 prun -np 1 ./loadbalancer-elastic.sh $poolmanager $1 $2 $3 $4 $log_file &
 loadbalancer=""
 while ((`echo $loadbalancer|wc -c` <= 1))
@@ -53,8 +53,8 @@ do
 done
 echo "it is " $loadbalancer
 sleep 5
-echo $1 $2 $3 $4 $6 $7 `date` >> logs/$log_file.play
-echo "#" $1 $2 $3 $4 $6 $7 `date` >> results/$log_file.play
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> logs/$log_file.play
+echo "#" $1 $2 $3 $4 $6 $7 $8 $9 `date` >> results/$log_file.play
 echo "starting trace"
 prun -np 1 ./trace-player.sh $loadbalancer $7 $log_file
 echo "killing all"

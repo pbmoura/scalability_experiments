@@ -12,7 +12,7 @@ Queue *Q;
 Linked_list *tail = NULL;
 char *hostname;
 pthread_mutex_t m_peers;
-long task_time_micro, contention_time_micro, coherency_time_micro;
+long task_time_micro;
 
 void enqueue_requests(int listen) {
 	int sock;
@@ -144,8 +144,8 @@ void* manage_peers_listen(void* arg) {
 }
 
 int main(int argc, char *argv[]) {
-	double contention = atof(argv[1]);
-	double coherency = atof(argv[2]);
+	long contention = atol(argv[1]);
+	long coherency = atol(argv[2]);
 	int n_processes = atoi(argv[3]);
 	double s1 = atof(argv[4]);
 	char *peers;
@@ -158,8 +158,6 @@ int main(int argc, char *argv[]) {
 	pthread_t t1, t2;
 
 	task_time_micro = lrint(s1 * 1000000);
-	contention_time_micro = lrint(task_time_micro * contention);
-	coherency_time_micro = lrint(task_time_micro * coherency);
 
 	Q = createQueue(50, sizeof(int));
 	pthread_mutex_init(&m_peers, NULL );
@@ -200,9 +198,9 @@ int main(int argc, char *argv[]) {
 	if (fork()) {
 		//receives connections from peers
 		if (fork())
-			receive_sync(PORT_SER, contention_time_micro);
+			receive_sync(PORT_SER, contention*1000);
 		else
-			receive_sync(PORT_PAR, coherency_time_micro);
+			receive_sync(PORT_PAR, coherency*1000);
 	} else {
 		//receives connections from load balancer
 		pthread_create(&t1, NULL, manage_peers_listen, NULL );
