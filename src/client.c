@@ -11,6 +11,7 @@ int main(int argc, char *argv[]) {
 	char* workers_p = argv[6]; //not user. just to print
 	char* contention = argv[7]; //not user. just to print
 	char* coherency = argv[8];
+	char* counter = argv[9];
 	int sock; //socket descriptor
 	int msg, reply; //reply from load balancer
 	int i, j; //loop iterators
@@ -33,8 +34,8 @@ int main(int argc, char *argv[]) {
 				read(sock, &reply, sizeof(int));
 				close(sock);
 				elapsed_time = time_millis() - start_time;
-				printf("%d %d %d %s %s %s %s %s %ld %ld\n", i + 1, j + 1,
-						requests, st, workers_n, workers_p, contention, coherency, elapsed_time, start_time);
+				printf("%d %d %d %s %s %s %s %s %ld %ld %s\n", i + 1, j + 1,
+						requests, st, workers_n, workers_p, contention, coherency, elapsed_time, start_time, counter);
 			}
 			return 0;
 		} else {
