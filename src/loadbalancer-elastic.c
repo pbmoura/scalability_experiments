@@ -82,6 +82,7 @@ Node* next_worker() {
 	Linked_list* iterator;
 	Node* node;
 
+	sem_wait(sem_workers);
 	iterator = workers;
 	node = iterator->value;
 	do {
@@ -91,6 +92,8 @@ Node* next_worker() {
 		iterate(&iterator);
 	} while (iterator != NULL);
 	fprintf(stderr, "next_worker returning %s %i\n", node->name, node->queue_size);
+	arrivalNode(node);
+	sem_post(sem_workers);
 	return node;
 }
 
@@ -129,7 +132,7 @@ void release_workers(char* host, int qtd) {
 void* monitoring(void* arg) {
 	char* host_name = (char*) arg;
 	while (1) {
-		usleep(500000);
+		usleep(2500000);
 		verify_num_workers();
 	}
 	return 0;
@@ -146,6 +149,7 @@ void arrival() {
 void departure() {
 	sem_wait(sem_load);
 	load--;
+	//verify_num_workers();
 	sem_post(sem_load);
 	fprintf(stderr, "%ld departure %d %d\n", time_millis(), load, num_workers);
 }
@@ -162,7 +166,6 @@ void *handle_request(void *arg) {
 	st = time_millis();
 	read(connfd, &data, sizeof(data));
 	sock = connectTo(worker->name, PORT);
-	arrivalNode(worker);
 	write(sock, &data, sizeof(data));
 	read(sock, &data, sizeof(data));
 	departureNode(worker);
