@@ -64,10 +64,10 @@ void verify_num_workers() {
 }
 
 void init(int argc, char *argv[]) {
-	contention = atof(argv[2]);
-	coherency = atof(argv[3]);
-	s1 = atof(argv[4]);
-	x1 = atof(argv[5]);
+	contention = atof(argv[3]);
+	coherency = atof(argv[4]);
+	s1 = atof(argv[5]);
+	x1 = atof(argv[6]);
 	max_workers = usl_peak();
 	max_throughput = usl(max_workers);
 	fprintf(stderr, "limit of %f workers at %f req/s\n", max_workers, max_throughput);

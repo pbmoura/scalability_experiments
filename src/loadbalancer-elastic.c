@@ -100,7 +100,7 @@ Node* next_worker() {
 void request_workers(char* host, int qtd) {
 	int i, size;
 	char* node;
-	fprintf(stderr, "%ld requesting %d\n", time_millis(), qtd);
+	fprintf(stderr, "%ld requesting %d %d %d\n", time_millis(), qtd, load, num_workers);
 	int sock = connectTo(host, PORT_PM);
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i < qtd; i++) {
@@ -117,7 +117,7 @@ void request_workers(char* host, int qtd) {
 void release_workers(char* host, int qtd) {
 	int i, size;
 	char* node;
-	fprintf(stderr, "%ld releasing %d\n", time_millis(), qtd);
+	fprintf(stderr, "%ld releasing %d %d %d\n", time_millis(), qtd, load, num_workers);
 	int sock = connectTo(host, PORT_PM);
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i > qtd; i--) {
@@ -130,9 +130,9 @@ void release_workers(char* host, int qtd) {
 }
 
 void* monitoring(void* arg) {
-	char* host_name = (char*) arg;
+	unsigned int* mon_interval = (unsigned int*) arg;
 	while (1) {
-		usleep(2500000);
+		usleep(*mon_interval * 1000);
 		verify_num_workers();
 	}
 	return 0;
@@ -180,19 +180,13 @@ void *handle_request(void *arg) {
 
 int main(int argc, char *argv[]) {
 	pool_manager = argv[1];  //pool manager's hostname
-//	contention = atof(argv[2]);
-//	coherency = atof(argv[3]);
-//	s1 = atof(argv[4]);
-//	x1 = atof(argv[5]);
+	unsigned int interval = atoi(argv[2]); //monitoring loop interval
+	fprintf(stderr, "interval %u\n", interval);
 
 	init(argc, argv);
 
 	int listenfd = 0, connfd = 0;
 	pthread_t t_mon, t_req;
-
-//	max_workers = usl_peak();
-//	max_throughput = usl(max_workers);
-//	fprintf(stderr, "limit of %f workers at %f req/s\n", max_workers, max_throughput);
 
 	sem_load = createsemaphore("/sem_load", 1);
 	sem_workers = createsemaphore("/sem_workers", 1);
@@ -202,7 +196,7 @@ int main(int argc, char *argv[]) {
 	socketlisten(&listenfd, atoi(PORT_LB));
 
 	fflush(stdout);
-	pthread_create(&t_mon, NULL, monitoring, (void *) pool_manager);
+	pthread_create(&t_mon, NULL, monitoring, (void *) &interval);
 	while (1) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		//fprintf(stderr, "accepted\n");
