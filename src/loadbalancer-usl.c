@@ -69,6 +69,6 @@ void init(int argc, char *argv[]) {
 	s1 = atof(argv[5]);
 	x1 = atof(argv[6]);
 	max_workers = usl_peak();
-	max_throughput = usl(max_workers);
+	max_throughput = usl(max_workers) * x1;
 	fprintf(stderr, "limit of %f workers at %f req/s\n", max_workers, max_throughput);
 }
