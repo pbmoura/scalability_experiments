@@ -133,6 +133,7 @@ void* monitoring(void* arg) {
 	unsigned int* mon_interval = (unsigned int*) arg;
 	while (1) {
 		usleep(*mon_interval * 1000);
+		fprintf(stderr, "%ld monitoring %d %d\n", time_millis(), load, num_workers);
 		verify_num_workers();
 	}
 	return 0;
