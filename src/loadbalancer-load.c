@@ -29,3 +29,5 @@ void verify_num_workers() {
 	if (max <= limit_min && num_workers > 1)
 		release_workers(pool_manager, -1);
 }
+
+void onarrival() {}

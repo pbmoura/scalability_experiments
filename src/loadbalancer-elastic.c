@@ -10,9 +10,11 @@ int num_workers = 0;
 Linked_list *workers = NULL;
 sem_t *sem_load, *sem_workers;
 char* pool_manager;
+unsigned int monitoring_interval;
 
 void init(int argc, char *argv[]);
 void verify_num_workers();
+void onarrival();
 
 void send_worker(char* dest, int action, char* node) {
 	fprintf(stderr, "informing of action %d in node %s to %s\n", action, node, dest);
@@ -130,9 +132,8 @@ void release_workers(char* host, int qtd) {
 }
 
 void* monitoring(void* arg) {
-	unsigned int* mon_interval = (unsigned int*) arg;
 	while (1) {
-		usleep(*mon_interval * 1000);
+		usleep(monitoring_interval * 1000);
 		fprintf(stderr, "%ld monitoring %d %d\n", time_millis(), load, num_workers);
 		verify_num_workers();
 	}
@@ -144,6 +145,7 @@ void arrival() {
 	load++;
 	//verify_num_workers();
 	sem_post(sem_load);
+	onarrival();
 	fprintf(stderr, "%ld arrival %d %d\n", time_millis(), load, num_workers);
 }
 
@@ -181,8 +183,8 @@ void *handle_request(void *arg) {
 
 int main(int argc, char *argv[]) {
 	pool_manager = argv[1];  //pool manager's hostname
-	unsigned int interval = atoi(argv[2]); //monitoring loop interval
-	fprintf(stderr, "interval %u\n", interval);
+	monitoring_interval = atoi(argv[2]); //monitoring loop interval
+	fprintf(stderr, "interval %u\n", monitoring_interval);
 
 	init(argc, argv);
 
@@ -197,7 +199,7 @@ int main(int argc, char *argv[]) {
 	socketlisten(&listenfd, atoi(PORT_LB));
 
 	fflush(stdout);
-	pthread_create(&t_mon, NULL, monitoring, (void *) &interval);
+	pthread_create(&t_mon, NULL, monitoring, NULL);
 	while (1) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		//fprintf(stderr, "accepted\n");

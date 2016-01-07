@@ -1,6 +1,8 @@
 #include "loadbalancer-elastic.c"
 
 double contention, coherency, s1, x1, max_throughput, max_workers;
+sem_t *sem_arrival;
+int arrivals;
 
 int usl_peak() {
 	return lrint(sqrt((1 - contention) / coherency));
@@ -10,15 +12,11 @@ double usl(int n) {
 	return n / (1 + contention * (n - 1) + n * coherency * (n - 1));
 }
 
-double service_time(int w) { //w is the number of workers
-	double n = (double) w;
-	fprintf(stderr, "service time for %d\n", w);
-	return s1 + s1 * contention * (n - 1) + s1 * coherency * n * (n - 1);
-}
-
-double arrival_rate(int current_load, double service_time) { //t is the service time
-	fprintf(stderr, "arrival rate for %d %f\n", current_load, service_time);
-	return current_load / service_time;
+double arrival_rate() {
+	//fprintf(stderr, "arrival rate for %d %f\n", current_load, service_time);
+	//return current_load / service_time;
+	fprintf(stderr, "arrival rate for %u %d\n", monitoring_interval, arrivals);
+	return (float)arrivals / ((float)monitoring_interval/1000.0);
 }
 
 double estimate_workers(double x) { //x is required throughput
@@ -43,8 +41,7 @@ int estimate_num_workers(int current_num_workers, int current_load) {
 	else {
 		n = ceil(
 				estimate_workers(
-						arrival_rate(current_load,
-								service_time(current_num_workers))));
+						arrival_rate()));
 		if (n < 1)
 			n = 1;
 	}
@@ -61,6 +58,15 @@ void verify_num_workers() {
 	} else if (diff < 0) {
 		release_workers(pool_manager, diff);
 	}
+	sem_wait(sem_arrival);
+	arrivals = 0;
+	sem_post(sem_arrival);
+}
+
+void onarrival() {
+	sem_wait(sem_arrival);
+	arrivals++;
+	sem_post(sem_arrival);
 }
 
 void init(int argc, char *argv[]) {
@@ -70,5 +76,6 @@ void init(int argc, char *argv[]) {
 	x1 = atof(argv[6]);
 	max_workers = usl_peak();
 	max_throughput = usl(max_workers) * x1;
+	sem_arrival = createsemaphore("/sem_arrival", 1);
 	fprintf(stderr, "limit of %f workers at %f req/s\n", max_workers, max_throughput);
 }
