@@ -10,9 +10,11 @@ int num_workers = 0;
 Linked_list *workers = NULL;
 sem_t *sem_load, *sem_workers;
 char* pool_manager;
+unsigned int monitoring_interval;
 
 void init(int argc, char *argv[]);
 void verify_num_workers();
+void onarrival();
 
 void send_worker(char* dest, int action, char* node) {
 	fprintf(stderr, "informing of action %d in node %s to %s\n", action, node, dest);
@@ -100,7 +102,7 @@ Node* next_worker() {
 void request_workers(char* host, int qtd) {
 	int i, size;
 	char* node;
-	fprintf(stderr, "%ld requesting %d\n", time_millis(), qtd);
+	fprintf(stderr, "%ld requesting %d %d %d\n", time_millis(), qtd, load, num_workers);
 	int sock = connectTo(host, PORT_PM);
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i < qtd; i++) {
@@ -117,7 +119,7 @@ void request_workers(char* host, int qtd) {
 void release_workers(char* host, int qtd) {
 	int i, size;
 	char* node;
-	fprintf(stderr, "%ld releasing %d\n", time_millis(), qtd);
+	fprintf(stderr, "%ld releasing %d %d %d\n", time_millis(), qtd, load, num_workers);
 	int sock = connectTo(host, PORT_PM);
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i > qtd; i--) {
@@ -130,9 +132,9 @@ void release_workers(char* host, int qtd) {
 }
 
 void* monitoring(void* arg) {
-	char* host_name = (char*) arg;
 	while (1) {
-		usleep(2500000);
+		usleep(monitoring_interval * 1000);
+		fprintf(stderr, "%ld monitoring %d %d\n", time_millis(), load, num_workers);
 		verify_num_workers();
 	}
 	return 0;
@@ -143,6 +145,7 @@ void arrival() {
 	load++;
 	//verify_num_workers();
 	sem_post(sem_load);
+	onarrival();
 	fprintf(stderr, "%ld arrival %d %d\n", time_millis(), load, num_workers);
 }
 
@@ -180,19 +183,13 @@ void *handle_request(void *arg) {
 
 int main(int argc, char *argv[]) {
 	pool_manager = argv[1];  //pool manager's hostname
-//	contention = atof(argv[2]);
-//	coherency = atof(argv[3]);
-//	s1 = atof(argv[4]);
-//	x1 = atof(argv[5]);
+	monitoring_interval = atoi(argv[2]); //monitoring loop interval
+	fprintf(stderr, "interval %u\n", monitoring_interval);
 
 	init(argc, argv);
 
 	int listenfd = 0, connfd = 0;
 	pthread_t t_mon, t_req;
-
-//	max_workers = usl_peak();
-//	max_throughput = usl(max_workers);
-//	fprintf(stderr, "limit of %f workers at %f req/s\n", max_workers, max_throughput);
 
 	sem_load = createsemaphore("/sem_load", 1);
 	sem_workers = createsemaphore("/sem_workers", 1);
@@ -202,7 +199,7 @@ int main(int argc, char *argv[]) {
 	socketlisten(&listenfd, atoi(PORT_LB));
 
 	fflush(stdout);
-	pthread_create(&t_mon, NULL, monitoring, (void *) pool_manager);
+	pthread_create(&t_mon, NULL, monitoring, NULL);
 	while (1) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		//fprintf(stderr, "accepted\n");

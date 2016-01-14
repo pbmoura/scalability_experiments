@@ -1,4 +1,4 @@
-all: client worker lb play pool elastic
+all: client worker lb play pool elastic load
 
 client:
 	gcc src/client.c -o bin/client -lrt -lpthread
@@ -14,6 +14,9 @@ lb:
 	
 elastic:
 	gcc src/loadbalancer-usl.c -o bin/elastic -lrt -lpthread -lm
+
+load:
+	gcc src/loadbalancer-load.c -o bin/load -lrt -lpthread
 	
 pool:
 	gcc src/pool-manager.c -o bin/pool -lrt -lpthread
