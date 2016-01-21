@@ -159,10 +159,10 @@ int main(int argc, char *argv[]) {
 
 	task_time_micro = lrint(s1 * 1000000);
 
-	Q = createQueue(50, sizeof(int));
+	Q = createQueue(100, sizeof(int));
 	pthread_mutex_init(&m_peers, NULL );
 
-//get hostname
+	//get hostname
 	hostname = malloc(8);
 	gethostname(hostname, 8);
 
