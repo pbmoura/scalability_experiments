@@ -39,7 +39,7 @@ Queue * createQueue(int maxElements, size_t elementSize) {
 }
 void Dequeue(Queue *Q) {
 	if (Q->size == 0) {
-		fprintf(stderr, "Queue is Empty\n");
+		fprintf(stderr, "ERROR: Dequeueing from empty queue\n");
 		return;
 	} else {
 		Q->size--;
@@ -55,7 +55,7 @@ void *elementAt(Queue *Q, int offset) {
 }
 void *front(Queue *Q) {
 	if (Q->size == 0) {
-		printf("Queue is Empty\n");
+		printf("ERROR: Reading from empty Queue\n");
 		exit(0);
 	}
 	//return Q->elements[Q->front];
@@ -72,7 +72,7 @@ void DequeueElement(Queue *Q, void** element) {
 void Enqueue(Queue *Q, void* element) {
 	void** head;
 	if (Q->size == Q->capacity) {
-		fprintf(stderr, "Queue is Full\n");
+		fprintf(stderr, "ERROR: Enqueing in full queue\n");
 	} else {
 		pthread_mutex_lock(&(Q->mutex));
 		Q->size++;
