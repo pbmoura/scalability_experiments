@@ -7,8 +7,8 @@ file_name1 <- args[1]
 file_name2 <- args[2]    
 SLA <- args[3]
 
-#file_name1 <- "./data/step2/single3c_20.play"
-#file_name2 <- "./data/step2/elastic3c_20.play"
+#file_name1 <- "./data/step2/single1_13.play"
+#file_name2 <- "./data/step2/elastic1_13.play"
 
 #SLA <- 8000
 data1 <- read.table(file_name1)
