@@ -6,8 +6,8 @@ args <- commandArgs(TRUE)
 file_name <- args[1]    
 file_name2 <- args[2] 
 
-#file_name <- "./data/step2/elastic3c_20.ad"
-#file_name2 <- "./data/step2/elastic3c_20.hand"
+#file_name <- "./data/step2/single1_13.ad"
+#file_name2 <- "./data/step2/elastic1_13.hand"
 
 
 data <- read.table(file_name)
