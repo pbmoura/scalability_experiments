@@ -1,6 +1,6 @@
 #!/usr/bin/Rscript
-source("./common.R")
 #setwd("~/github/scalability_experiments/analysis")
+source("./common.R")
 
 args <- commandArgs(TRUE)
 file_name1 <- args[1]    
@@ -27,6 +27,9 @@ plot_over(wd, "workload", type="l", xlim=c(0,max(time_sec1, time_sec2)), ylim=c(
 legend("topleft", legend = c("queue USL", "queue single-step", "workload"), col=c("blue", "red", "black"), lty=1)
 dev.off()
 
+avg(time_sec1, data1$V3)
+avg(time_sec2, data2$V3)
+
 
 pdf(file=paste0(file_name1, "-pool.pdf"))
 par(mar = c(5,5,2,5))
@@ -35,3 +38,7 @@ lines(time_sec2, data2$V4, col="blue")
 plot_over(wd, "workload", type="l", xlim=c(0,max(time_sec1, time_sec2)), ylim=c(0,max(wd$intervals[wd$intervals != Inf])))
 legend("topleft", legend = c("USL", "single-step", "workload"), col=c("blue", "red", "black"), lty=1)
 dev.off()
+
+avg(time_sec1, data1$V4)
+avg(time_sec2, data2$V4)
+

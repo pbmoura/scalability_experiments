@@ -15,3 +15,8 @@ plot_over <- function(data, ylab, ...) {
   axis(side = 4)
   mtext(side = 4, line = 3, ylab)
 }
+
+avg <- function(x, y) {
+  library(zoo)
+  sum(diff(x)*rollmean(y,2))/max(x)
+}

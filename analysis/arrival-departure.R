@@ -1,6 +1,6 @@
 #!/usr/bin/Rscript
-source("./common.R")
 #setwd("~/github/scalability_experiments/analysis")
+source("./common.R")
 
 args <- commandArgs(TRUE)
 file_name <- args[1]    
