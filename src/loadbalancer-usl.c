@@ -2,7 +2,7 @@
 
 double contention, coherency, s1, x1, max_throughput, max_workers;
 sem_t *sem_arrival;
-int arrivals;
+int arrivals, worker_capacity;
 
 int usl_peak() {
 	return lrint(sqrt((1 - contention) / coherency));
@@ -56,6 +56,9 @@ void verify_num_workers() {
 	if (diff > 0) {
 		request_workers(pool_manager, diff);
 	} else if (diff < 0) {
+		fprintf(stderr, "estimated capacity is %d\n", n * worker_capacity);
+		if (load > n * worker_capacity) 
+			diff = load / worker_capacity - num_workers;
 		release_workers(pool_manager, diff);
 	}
 	sem_wait(sem_arrival);
@@ -74,6 +77,7 @@ void init(int argc, char *argv[]) {
 	coherency = atof(argv[4]);
 	s1 = atof(argv[5]);
 	x1 = atof(argv[6]);
+	worker_capacity = atoi(argv[7]);
 	max_workers = usl_peak();
 	max_throughput = usl(max_workers) * x1;
 	sem_arrival = createsemaphore("/sem_arrival", 1);
