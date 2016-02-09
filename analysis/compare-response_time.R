@@ -8,7 +8,7 @@ file_name2 <- args[2]
 SLA <- args[3]
 
 #file_name1 <- "./data/step2/single3b_20.play"
-#file_name2 <- "./data/step2/elastic3b_20.play"
+#file_name2 <- "./data/step2/elastic3b_1.play"
 
 #SLA <- 13000
 data1 <- read.table(file_name1)
@@ -31,6 +31,9 @@ mean(data2$V3)
 
 sd(data1$V3)
 sd(data2$V3)
+
+max(data1$V3)
+max(data2$V3)
 
 
 #barplot(data2[order(data2$V1),3], beside=TRUE, , xlab="requests", ylab="response time (ms)", border=NA)
