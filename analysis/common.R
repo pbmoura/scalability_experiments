@@ -10,7 +10,7 @@ workload <- function(sample) {
 }
 
 plot_over <- function(data, ylab, ...) {
-  par(new = T)
+  par(new = TRUE)
   plot(data, axes=F, xlab=NA, ylab=NA, ...)
   axis(side = 4)
   mtext(side = 4, line = 3, ylab)
