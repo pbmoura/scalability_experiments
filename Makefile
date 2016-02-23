@@ -16,7 +16,7 @@ elastic:
 	gcc src/loadbalancer-usl.c -o bin/elastic -lrt -lpthread -lm
 
 load:
-	gcc src/loadbalancer-load.c -o bin/load -lrt -lpthread
+	gcc src/loadbalancer-single.c -o bin/load -lrt -lpthread
 	
 pool:
 	gcc src/pool-manager.c -o bin/pool -lrt -lpthread
