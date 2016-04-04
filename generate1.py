@@ -6,7 +6,7 @@ params = sys.argv[1:8]
 if (len(sys.argv) > 8):
   iter_to = int(sys.argv[8]) + 1
 else:
-  iter_to = 11
+  iter_to = 31
 if (len(sys.argv) > 9):
   iter_from = int(sys.argv[9])
 else:
@@ -22,7 +22,7 @@ step_0 = int(params[0])
 file.write('#!/bin/bash\n')
 for i in range(iter_from,iter_to):
   params[0] = (i)*step_0
-  format = tuple(params)+(i, output_file,)
-  file.write('./run %i %s %s %s %s %s %s %i %s\n' % format )
+  format = tuple(params)+(output_file,)
+  file.write('./run %i %s %s %s %s %s %s %s\n' % format )
 file.close()
 os.chmod(file_name, stat.S_IRWXU)
