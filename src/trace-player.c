@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 	while(EOF != fscanf(fd, "%lu\n", &delay)) {
 		fprintf(stderr, "waiting %ld\n", delay);
 		counter++;
-		usleep(1000 * delay);
+		usleep(delay);
 		if (!fork()) {
 			st = time_millis();
 			sock = connectTo(load_balancer, PORT_LB);

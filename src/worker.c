@@ -13,6 +13,11 @@ Linked_list *tail = NULL;
 char *hostname;
 pthread_mutex_t m_peers;
 long task_time_micro;
+typedef struct sync_args {
+	char* port;
+	long sync_time;
+	int connfd;
+}sync_args;
 
 void enqueue_requests(int listen) {
 	int sock;
@@ -27,8 +32,10 @@ void synchronize(int hops, char* port) {
 	int serverfd;
 	char* name;
 	Linked_list *node;
-	if (tail == NULL )
+	if (tail == NULL ) {
+		fprintf(stderr, "No node to sync.\n");
 		return;
+	}
 	node = tail->next;
 	do { //while (strcmp(hostname, hosts->name) != 0) {
 		name = (char*)node->value;
@@ -56,6 +63,7 @@ void* process_requests(void *arg) {
 		//contention
 		synchronize(1, PORT_SER);
 		//task execution
+		fprintf(stderr, "sleeping for %ld micro\n", task_time_micro);
 		usleep(task_time_micro);
 		//coherency
 		synchronize(2, PORT_PAR);
@@ -68,31 +76,51 @@ void* process_requests(void *arg) {
 	return 0;
 }
 
+void* process_sync(void* args) {
+	int hops;
+	char* port = ((sync_args*)args)->port;
+	long sync_time = ((sync_args*)args)->sync_time;
+	int connfd = ((sync_args*)args)->connfd;
+	
+	read(connfd, &hops, sizeof(hops));
+	fprintf(stderr, "%ld receiving sync %d\n", time_millis(), hops);
+	usleep(sync_time);
+	if (hops > 1) {
+		synchronize(hops-1, port);
+	} 
+	write(connfd, &hops, sizeof(hops));
+}
+
 void receive_sync(char* port, long sync_time) {
-	int listenfd = 0, connfd = 0, hops;
+	int listenfd = 0, connfd = 0, pt_result;
 	pid_t pid;
+	sync_args* args;
+	pthread_t t1;
 
 	socketlisten(&listenfd, atoi(port));
 
 	while (1) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
-		if (!(pid = fork())) {
+		args = malloc(sizeof(sync_args));
+		args->port = port;
+		args->sync_time = sync_time;
+		args->connfd = connfd;
+		if ((pt_result = pthread_create(&t1, NULL, process_sync, (void*)args )) != 0)
+			fprintf(stderr, "ERROR creating process_sync thread: %i\n", pt_result);
+		/*if (!(pid = fork())) {
 			read(connfd, &hops, sizeof(hops));
 			fprintf(stderr, "%ld receiving sync %d\n", time_millis(), hops);
 			usleep(sync_time);
 			if (hops > 1) {
-				//usleep(coherency_time_micro);
 				synchronize(hops-1, port);
-			} /*else {
-				usleep(contention_time_micro);
-			}*/
+			} 
 			write(connfd, &hops, sizeof(hops));
 			return;
 		} else {
 			if (pid == -1)
 				fprintf(stderr, "%ld ERROR creating process: %d\n",
 						time_millis(), errno);
-		}
+		}*/
 	}
 }
 
@@ -156,6 +184,7 @@ int main(int argc, char *argv[]) {
 	Linked_list *hosts;
 	pid_t pid;
 	pthread_t t1, t2;
+	int pt_result;
 
 	task_time_micro = lrint(s1 * 1000000);
 
@@ -198,9 +227,9 @@ int main(int argc, char *argv[]) {
 	if (fork()) {
 		//receives connections from peers
 		if (fork())
-			receive_sync(PORT_SER, contention*1000);
+			receive_sync(PORT_SER, contention);
 		else
-			receive_sync(PORT_PAR, coherency*1000);
+			receive_sync(PORT_PAR, coherency);
 	} else {
 		//receives connections from load balancer
 		pthread_create(&t1, NULL, manage_peers_listen, NULL );
@@ -208,7 +237,8 @@ int main(int argc, char *argv[]) {
 		socketlisten(&listenfd, atoi(PORT));
 
 		for (i = 0; i < n_processes; i++)
-			pthread_create(&t2, NULL, process_requests, NULL );
+			if((pt_result = pthread_create(&t2, NULL, process_requests, NULL )) != 0)
+				fprintf(stderr, "ERROR opening thread: %i\n", pt_result);
 		enqueue_requests(listenfd);
 	}
 }
