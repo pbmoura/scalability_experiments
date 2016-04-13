@@ -7,7 +7,7 @@ play:
 	gcc src/trace-player.c -o bin/play -lrt -lpthread
 
 worker:
-	gcc src/worker.c -o bin/worker -lrt -lpthread -lm
+	gcc src/worker-nosync.c -o bin/worker -lrt -lpthread -lm
 
 lb:
 	gcc src/loadbalancer.c -o bin/loadbalancer -lrt -lpthread
