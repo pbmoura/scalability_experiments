@@ -3,17 +3,18 @@
 int main(int argc, char *argv[]) {
 	Queue *queue;
 	int n[] = {1, 2, 3, 4};
-	int* i, j;
+	int* i, j, **k;
 
 	queue = createQueue(5, sizeof(int*));
 	i = n;
 	for(j = 0; j<4; j++) {
-		printf("enqueueing %i\n", *i);
+		printf("enqueueing %i %li\n", *i, i);
 		Enqueue(queue, i++);
 	}
-	printf("elements %i\n", **((int**)(queue->elements)));
+	printf("elements %i %li\n", **((int**)(queue->elements)), *((int**)(queue->elements)));
 	for(j = 0; j<4; j++) {
-		DequeueElement(queue, &i);
+		DequeueElement(queue, &k);
+		i = *k;
 		printf("got %i\n", *i);
 	}
 }

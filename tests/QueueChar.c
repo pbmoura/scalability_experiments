@@ -4,7 +4,7 @@
 int main(int argc, char *argv[]) {
 	int num = atoi(argv[1]);
 	char* names = argv[2];
-	char* name;
+	char* name, **name_p;
 	Queue* queue;
 
 	queue = createQueue(num, sizeof(char*));
@@ -14,9 +14,10 @@ int main(int argc, char *argv[]) {
 		Enqueue(queue, name);
 		name = strtok(NULL, ",");
 	}
-	printf("elements[0] %s\n", (char*)queue->elements);
+	printf("elements[0] %s\n", *(char**)queue->elements);
 	while(!QueueIsEmpty(queue)) {
-		DequeueElement(queue, name);
+		DequeueElement(queue, &name_p);
+		name = *name_p;
 		printf("dequeued %s\n", name);
 	}
 }
