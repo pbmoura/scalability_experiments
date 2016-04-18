@@ -2,22 +2,27 @@
 #include <string.h>
 
 int main(int argc, char *argv[]) {
-	int num = atoi(argv[1]);
-	char* names = argv[2];
+	char* names = argv[1];
 	char* name, **name_p;
 	Queue* queue;
+	struct Linked_list *iterator;
 
-	queue = createQueue(num, sizeof(char*));
+	queue = createQueue(sizeof(char*));
 	name = strtok(names, ",");
 	while (name != NULL) {
-		printf("enqueueing %s\n", name);
+		printf("enqueueing %s - %i\n", name, QueueSize(queue));
 		Enqueue(queue, name);
 		name = strtok(NULL, ",");
 	}
-	printf("elements[0] %s\n", *(char**)queue->elements);
+	for(iterator = queue->front->next; iterator != NULL; iterator = iterator->next) {
+		printf("element %s\n", (char*)(iterator->value));
+	}
+//	printf("front %s\n", (char*)((Linked_list*)(front(queue)))->value);
 	while(!QueueIsEmpty(queue)) {
-		DequeueElement(queue, &name_p);
-		name = *name_p;
-		printf("dequeued %s\n", name);
+		printf("dequeued ");
+		fflush(stdout);
+		DequeueElement(queue, (void**)&name);
+//		name = *name_p;
+		printf("%s - %i\n", name, QueueSize(queue));
 	}
 }

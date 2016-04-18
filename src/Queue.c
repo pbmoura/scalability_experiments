@@ -4,27 +4,23 @@
 #include<semaphore.h>
 #include<fcntl.h>
 
+#include "Linked_list.c"
+
 typedef struct Queue {
-	int capacity;
-	int size;
-	int front;
-	int rear;
-	void *elements;
+	struct Linked_list *front;
+	struct Linked_list *rear;
 	size_t element_size;
 
 	pthread_mutex_t mutex;
 	sem_t *sem;
 } Queue;
 
-Queue * createQueue(int maxElements, size_t elementSize) {
+Queue * createQueue(size_t elementSize) {
 	char *sem_name;
 	Queue *Q;
 	Q = (Queue *) malloc(sizeof(Queue));
-	Q->elements = malloc(elementSize * maxElements);
-	Q->size = 0;
-	Q->capacity = maxElements;
-	Q->front = 0;
-	Q->rear = -1;
+	Q->front = createList(NULL, NULL);
+	Q->rear = Q->front;
 	Q->element_size = elementSize;
 
 	sem_name = malloc(23);
@@ -38,29 +34,23 @@ Queue * createQueue(int maxElements, size_t elementSize) {
 	return Q;
 }
 void Dequeue(Queue *Q) {
-	if (Q->size == 0) {
+	if (QueueIsEmpty(Q)) {
 		fprintf(stderr, "ERROR: Dequeueing from empty queue\n");
 		return;
 	} else {
-		Q->size--;
-		Q->front++;
-		if (Q->front == Q->capacity) {
-			Q->front = 0;
-		}
+		Q->front->next = Q->front->next->next;
+		if (Q->front->next == NULL)
+			Q->rear = Q->front;
+
 	}
 	return;
 }
-void *elementAt(Queue *Q, int offset) {
-	return Q->elements + offset * Q->element_size;
-}
 void *front(Queue *Q) {
-	if (Q->size == 0) {
+	if (QueueIsEmpty(Q)) {
 		printf("ERROR: Reading from empty Queue\n");
 		exit(0);
 	}
-	//return Q->elements[Q->front];
-	//return Q->elements + Q->front * Q->element_size;
-	return elementAt(Q, Q->front);
+	return Q->front->next->value;
 }
 void DequeueElement(Queue *Q, void** element) {
 	sem_wait(Q->sem);
@@ -70,24 +60,19 @@ void DequeueElement(Queue *Q, void** element) {
 	pthread_mutex_unlock(&(Q->mutex));
 }
 void Enqueue(Queue *Q, void* element) {
-	void** head;
-	if (Q->size == Q->capacity) {
-		fprintf(stderr, "ERROR: Enqueing in full queue\n");
-	} else {
-		pthread_mutex_lock(&(Q->mutex));
-		Q->size++;
-		Q->rear = Q->rear + 1;
-		if (Q->rear == Q->capacity) {
-			Q->rear = 0;
-		}
-		head = elementAt(Q, Q->rear);
-		*head = element;
-		//Q->elements[Q->rear] = element;
-		pthread_mutex_unlock(&(Q->mutex));
-		sem_post(Q->sem);
-	}
+	pthread_mutex_lock(&(Q->mutex));
+	insertAfter(element, Q->rear);
+	Q->rear = Q->rear->next;
+	pthread_mutex_unlock(&(Q->mutex));
+	sem_post(Q->sem);
 	return;
 }
 int QueueIsEmpty(Queue *Q) {
-	return Q->size == 0;
+	return (Q->front == Q->rear);
+	//return QueueSize(Q);
+}
+int QueueSize(Queue *Q) {
+	int size;
+	sem_getvalue(Q->sem, &size);
+	return size;
 }

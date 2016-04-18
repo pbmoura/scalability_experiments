@@ -7,14 +7,13 @@ Queue *nodes;
 void* process_request(void* arg) {
 	int socket = *((int*)arg);
 	int qtd, i, size;
-	char* node, **node_p;
+	char* node;
 	read(socket, &qtd, sizeof(int));
 	fprintf(stderr, "%ld requested %d\n", time_millis(), qtd);
 	if(qtd > 0) {
 		for(i = 0; i<qtd; i++) {
 			fprintf(stderr, "getting node %i\n", i);
-			DequeueElement(nodes, (void*)&node_p);
-			node = *node_p;
+			DequeueElement(nodes, (void*)&node);
 			fprintf(stderr, "got %s\n", node);
 			size = sizeof(node);
 			write(socket, &size, sizeof(int));
@@ -44,7 +43,7 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in serv_addr;
 	pthread_t t1;
 
-	nodes = createQueue(workers_n, sizeof(char*));
+	nodes = createQueue(sizeof(char*));
 	token = strtok(hostnames, ",");
 	while (token != NULL ) {
 		fprintf(stderr, "adding node %s\n", token);

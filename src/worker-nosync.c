@@ -6,7 +6,6 @@
 
 #include "common.c"
 #include "Queue.c"
-#include "Linked_list.c"
 
 Queue *Q;
 Linked_list *tail = NULL;
@@ -25,13 +24,12 @@ void enqueue_requests(int listen) {
 }
 
 void* process_requests(void *arg) {
-	int i, sock, sem_value, *sock_p;
+	int i, sock, sem_value;
 	unsigned long data;
 	long st, et, task_time;
 	while (1) {
 		fprintf(stderr, "%ld process_request\n", time_millis());
-		DequeueElement(Q, (void**)&sock_p);
-		sock = *sock_p;
+		DequeueElement(Q, (void**)&sock);
 		fprintf(stderr, "%ld processing %d\n", time_millis(), sock);
 		st = time_millis();
 		read(sock, &data, sizeof(data));
@@ -116,7 +114,7 @@ int main(int argc, char *argv[]) {
 
 	task_time_micro = lrint(s1 * 1000000);
 
-	Q = createQueue(5000, sizeof(int));
+	Q = createQueue(sizeof(int));
 	pthread_mutex_init(&m_peers, NULL );
 	num_peers = 0;
 
