@@ -25,7 +25,8 @@ void enqueue_requests(int listen) {
 }
 
 void* process_requests(void *arg) {
-	int i, sock, data, sem_value, *sock_p;
+	int i, sock, sem_value, *sock_p;
+	unsigned long data;
 	long st, et, task_time;
 	while (1) {
 		fprintf(stderr, "%ld process_request\n", time_millis());
@@ -40,7 +41,7 @@ void* process_requests(void *arg) {
 		fprintf(stderr, "sleeping for %ld micro\n", task_time);
 		usleep(task_time);
 		fprintf(stderr, "%ld replying %d\n", time_millis(), sock);
-		write(sock, &data, sizeof(int));
+		write(sock, &data, sizeof(data));
 		et = time_millis();
 		fprintf(stdout, "%ld %ld %d %d\n", st, et - st, data, sock);
 		fflush(stdout);
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
 
 	task_time_micro = lrint(s1 * 1000000);
 
-	Q = createQueue(500, sizeof(int));
+	Q = createQueue(5000, sizeof(int));
 	pthread_mutex_init(&m_peers, NULL );
 	num_peers = 0;
 

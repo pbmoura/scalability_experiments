@@ -161,7 +161,7 @@ void *handle_request(void *arg) {
 	int sock = 0;
 	int connfd =  *((int*)arg);
 	Node *worker;
-	int data;
+	unsigned long data;
 	long st, et;
 	worker = next_worker();
 	fprintf(stderr, "%ld handling to %s\n", time_millis(), worker->name);
@@ -201,6 +201,7 @@ int main(int argc, char *argv[]) {
 	fflush(stdout);
 	pthread_create(&t_mon, NULL, monitoring, NULL);
 	while (1) {
+		fprintf(stderr, "%ld accepting\n", time_millis());
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		//fprintf(stderr, "accepted\n");
 		pthread_create(&t_req, NULL, handle_request, (void *) &connfd);
