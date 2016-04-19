@@ -17,12 +17,14 @@ typedef struct ThreadPool {
 void incRunning(ThreadPool* pool) {
 	pthread_mutex_lock(&(pool->mutex));
 	pool->running++;
+	fprintf(stderr, "%d threads running - inc / queue size %d\n", pool->running, QueueSize(pool->tasks));
 	pthread_mutex_unlock(&(pool->mutex));
 }
 
 void decRunning(ThreadPool* pool) {
 	pthread_mutex_lock(&(pool->mutex));
 	pool->running--;
+	fprintf(stderr, "%d threads running - dec\n", pool->running);
 	pthread_mutex_unlock(&(pool->mutex));
 
 }
@@ -31,6 +33,8 @@ void* threadLoop(void* arg) {
 	Task *task;
 	struct ThreadPool* pool = (struct ThreadPool*)arg;
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	
+	fprintf(stderr, "starting threadLoop\n");
 
 	while(1) {
 		DequeueElement(pool->tasks, (void**)&task);
@@ -41,7 +45,7 @@ void* threadLoop(void* arg) {
 }
 
 ThreadPool* CreateThreadPool(int poolSize) {
-	int i;
+	int i, ret;
 	struct ThreadPool *pool = malloc(sizeof(ThreadPool));
 
 	pool->threads = malloc(poolSize * sizeof(pthread_t));
@@ -52,7 +56,12 @@ ThreadPool* CreateThreadPool(int poolSize) {
 	pthread_mutex_init(&(pool->mutex), NULL );
 
 	for(i=0; i<poolSize; i++) {
-		pthread_create(&(pool->threads[i]), NULL, threadLoop, (void*)pool);
+		ret = pthread_create(&(pool->threads[i]), NULL, threadLoop, (void*)pool);
+		if (ret != 0) {
+			//i--;
+			fprintf(stderr, "ERROR creating thread %d: %d\n", i, ret);
+		}
+			
 	}
 	return pool;
 }
@@ -70,7 +79,9 @@ void AddTask(ThreadPool* pool, Task* task) {
 }
 
 void WaitCompletion(ThreadPool* pool) {
+	fprintf(stderr, "WaitCompletion: QueueIsEmpty %d - running %d\n", QueueIsEmpty(pool->tasks), pool->running);
 	while((!QueueIsEmpty(pool->tasks)) || (pool->running > 0)) {
+		fprintf(stderr, "WaitCompletion: QueueIsEmpty %d - running %d\n", QueueIsEmpty(pool->tasks), pool->running);
 		sleep(1);
 	}
 }
