@@ -76,3 +76,10 @@ int QueueSize(Queue *Q) {
 	sem_getvalue(Q->sem, &size);
 	return size;
 }
+
+void DestroyQueue(Queue *Q) {
+	destroyList(Q->front);
+	sem_close(Q->sem);
+	pthread_mutex_destroy(&(Q->mutex));
+	free(Q);
+}
