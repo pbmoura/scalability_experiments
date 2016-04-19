@@ -19,7 +19,7 @@ void enqueue_requests(int listen) {
 		fprintf(stderr, "%ld accepting\n", time_millis());
 		sock = accept(listen, (struct sockaddr*) NULL, NULL );
 		fprintf(stderr, "%ld LISTEN got request %d\n", time_millis(), sock);
-		Enqueue(Q, sock);
+		Enqueue(Q, (void*)sock);
 	}
 }
 
