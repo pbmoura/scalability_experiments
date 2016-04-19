@@ -178,7 +178,8 @@ void *handle_request(void *arg) {
 	departure();
 	fprintf(stdout, "%ld %ld %s %d\n", st, et - st, worker->name, connfd);
 	fflush(stdout);
-	return NULL ;
+	pthread_exit(NULL);
+	//return NULL ;
 }
 
 int main(int argc, char *argv[]) {
@@ -188,7 +189,7 @@ int main(int argc, char *argv[]) {
 
 	init(argc, argv);
 
-	int listenfd = 0, connfd = 0;
+	int listenfd = 0, connfd = 0, ret;
 	pthread_t t_mon, t_req;
 
 	sem_load = createsemaphore("/sem_load", 1);
@@ -204,6 +205,8 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "%ld accepting\n", time_millis());
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		//fprintf(stderr, "accepted\n");
-		pthread_create(&t_req, NULL, handle_request, (void *) &connfd);
+		ret = pthread_create(&t_req, NULL, handle_request, (void *) &connfd);
+		if (ret != 0)
+			fprintf(stderr, "%ld ERROR creating thread: %d\n", time_millis(), ret);
 	}
 }
