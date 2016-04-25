@@ -4,7 +4,7 @@ client:
 	gcc src/client.c -o bin/client -lrt -lpthread
 	
 play:
-	gcc src/trace-player.c -o bin/play -lrt -lpthread
+	gcc src/trace-player-pool.c -o bin/play -lrt -lpthread -g
 
 worker:
 	gcc src/worker-nosync.c -o bin/worker -lrt -lpthread -lm

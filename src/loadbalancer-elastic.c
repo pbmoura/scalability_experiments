@@ -2,8 +2,9 @@
 #include <sys/mman.h>
 #include <math.h>
 #include "common.c"
-#include "Linked_list.c"
+//#include "Linked_list.c"
 #include "Node.c"
+#include "ThreadPool.c"
 
 int load = 0;
 int num_workers = 0;
@@ -157,17 +158,17 @@ void departure() {
 	fprintf(stderr, "%ld departure %d %d\n", time_millis(), load, num_workers);
 }
 
-void *handle_request(void *arg) {
+void handle_request(void *arg) {
 	int sock = 0;
 	int connfd =  *((int*)arg);
 	Node *worker;
 	unsigned long data;
 	long st, et;
 	worker = next_worker();
-	fprintf(stderr, "%ld handling to %s\n", time_millis(), worker->name);
 	arrival();
 	st = time_millis();
 	read(connfd, &data, sizeof(data));
+	fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
 	sock = connectTo(worker->name, PORT);
 	write(sock, &data, sizeof(data));
 	read(sock, &data, sizeof(data));
@@ -178,14 +179,19 @@ void *handle_request(void *arg) {
 	departure();
 	fprintf(stdout, "%ld %ld %s %d\n", st, et - st, worker->name, connfd);
 	fflush(stdout);
-	pthread_exit(NULL);
+	//pthread_exit(NULL);
 	//return NULL ;
 }
 
 int main(int argc, char *argv[]) {
+	struct ThreadPool *pool;
+	struct Task *aTask;
+	int *arg;
 	pool_manager = argv[1];  //pool manager's hostname
 	monitoring_interval = atoi(argv[2]); //monitoring loop interval
 	fprintf(stderr, "interval %u\n", monitoring_interval);
+
+	pool = CreateThreadPool(3000);
 
 	init(argc, argv);
 
@@ -204,9 +210,16 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		fprintf(stderr, "%ld accepting\n", time_millis());
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
-		//fprintf(stderr, "accepted\n");
-		ret = pthread_create(&t_req, NULL, handle_request, (void *) &connfd);
+		if (connfd == -1)
+			perror("accept");
+		arg = malloc(sizeof(int));
+		*arg = connfd;
+		aTask = malloc(sizeof(Task));
+		aTask->function = *handle_request;
+		aTask->arg = arg;
+		AddTask(pool, aTask);
+		/*ret = pthread_create(&t_req, NULL, handle_request, (void*)arg);
 		if (ret != 0)
-			fprintf(stderr, "%ld ERROR creating thread: %d\n", time_millis(), ret);
+			fprintf(stderr, "%ld ERROR creating thread: %d\n", time_millis(), ret);*/
 	}
 }
