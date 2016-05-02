@@ -21,8 +21,8 @@ done
 echo $NODES
 sleep 5
 echo "starting pool manager"
-echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> logs/$log_file.pm
-echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> results/$log_file.pm
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/logs/$log_file.pm
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/results/$log_file.pm
 prun -np 1 poolmanager.sh $6 $NODES $log_file &
 poolmanager=""
 while ((`echo $poolmanager|wc -c` <= 1))
@@ -38,8 +38,8 @@ done
 echo "it is " $poolmanager
 
 echo "starting load balancer"
-echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> logs/$log_file.lb
-echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> results/$log_file.lb
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/logs/$log_file.lb
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/results/$log_file.lb
 prun -np 1 ./loadbalancer-elastic.sh $poolmanager ${10} $1 $2 $3 $4 $5 $log_file &
 loadbalancer=""
 while ((`echo $loadbalancer|wc -c` <= 1))
@@ -54,8 +54,8 @@ do
 done
 echo "it is " $loadbalancer
 sleep 5
-echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}`date` >> logs/$log_file.play
-echo "#" $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> results/$log_file.play
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}`date` >> ~/scratch/logs/$log_file.play
+echo "#" $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/results/$log_file.play
 echo "starting trace"
 prun -np 1 ./trace-player.sh $loadbalancer $7 $log_file
 echo "killing all"
