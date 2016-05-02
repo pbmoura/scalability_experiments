@@ -28,9 +28,9 @@ void* process_request(void* arg) {
 			Enqueue(nodes, node);
 			fprintf(stderr, "received %s\n", node);
 		}
-		close(socket);
 	}
-	return 0;
+	close(socket);
+	pthread_exit(NULL);
 }
 
 int main(int argc, char *argv[]) {
@@ -55,7 +55,11 @@ int main(int argc, char *argv[]) {
 
 	fflush(stdout);
 	while (1) {
+		fprintf(stderr, "%ld accepting\n", time_millis());
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
-		pthread_create(&t1, NULL, process_request, &connfd);
+		if (connfd == -1)
+			perror("ERROR accept");
+		else 
+			pthread_create(&t1, NULL, process_request, &connfd);
 	}
 }

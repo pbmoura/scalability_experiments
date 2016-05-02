@@ -19,12 +19,44 @@ int main(int argc, char *argv[]) {
 	float throughput;
 	pid_t pid;
 
+	fprintf(stderr,"%ld starting warmup\n", time_millis());
 	for (i = 0; i < clients; i++) {
+		usleep(100);
+		if (!(pid = fork())) {
+			//for (j = 0; j < requests; j++) {
+				//start_time = time_millis();
+				//fprintf(stderr, "connecting to %s\n", load_balancer);
+				sock = connectTo(load_balancer, PORT_LB, "warmup");
+				//send request
+				msg = i*100+j;
+				//fprintf(stderr,"sending request %d %d\n", i, j);
+				write(sock, &msg, sizeof(int));
+				//fprintf(stderr,"sent request %d %d\n", i, j);
+				//wait for completion
+				read(sock, &reply, sizeof(int));
+				close(sock);
+				//elapsed_time = time_millis() - start_time;
+				//printf("%d %d %d %s %s %s %s %s %ld %ld %s\n", i + 1, j + 1,
+				//		requests, st, workers_n, workers_p, contention, coherency, elapsed_time, start_time, counter);
+			//}
+			return 0;
+		}/* else {
+			if (pid == -1)
+				fprintf(stderr, "ERROR creating process: %d\n", errno);
+
+		}*/
+	}
+	for (i = 0; i < clients; i++)
+		wait(NULL );
+	fprintf(stderr, "%ld starting requests\n", time_millis());
+
+	for (i = 0; i < clients; i++) {
+		usleep(100);
 		if (!(pid = fork())) {
 			for (j = 0; j < requests; j++) {
 				start_time = time_millis();
 				fprintf(stderr, "connecting to %s\n", load_balancer);
-				sock = connectTo(load_balancer, PORT_LB);
+				sock = connectTo(load_balancer, PORT_LB, "trace");
 				//send request
 				msg = i*100+j;
 				fprintf(stderr,"sending request %d %d\n", i, j);

@@ -20,11 +20,10 @@ void request(void* arg) {
 	fprintf(stderr, "%lu running request %lu after %lu\n", time_millis(), counter, delay);
 
 	st = time_millis();
-	sock = connectTo(load_balancer, PORT_LB);
+	sock = connectTo(load_balancer, PORT_LB, "to lb");
 	write(sock, &counter, sizeof(counter));
 	read(sock, &reply, sizeof(reply));
 	duration = time_millis() - st;
-	fprintf(stderr, "%lu response arrived %lu\n", time_millis(), counter);
 	close(sock);
 	sem_wait(sem_result);
 	fprintf(stdout, "%ld %lu %ld %lu\n", st, delay, duration, reply);
@@ -49,7 +48,7 @@ int main(int argc, char* argv[]) {
 
 	//signal(SIGPIPE, SIG_IGN);
 
-	pool = CreateThreadPool(3000);
+	pool = CreateThreadPool(2000);
 
 	fd = fopen(file_name,"r");
 	if (fd == NULL) {
@@ -71,12 +70,10 @@ int main(int argc, char* argv[]) {
 		AddTask(pool, aTask);
 	}
 	fprintf(stderr, "%lu workload finished\n", time_millis());
-	//WaitCompletion(pool);
 	while (returned < counter) {
 		fprintf(stderr, "%lu < %lu\n", returned, counter);
 		sleep(1);
 	}
 	fprintf(stderr, "finished with %lu of %lu\n", returned, counter);
-	//sleep(5);
 	DestroyThreadPool(pool);
 }

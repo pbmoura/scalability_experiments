@@ -60,15 +60,16 @@ struct addrinfo* getConnection(char *hostname, char *port) {
 	return result;
 }
 
-int connectAddr(struct addrinfo *conn) {
+int connectAddr(struct addrinfo *conn, char* tag) {
 	int sockfd;
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	//fprintf(stderr, "%ld connectingTo %s %i\n", time_millis(), tag, sockfd);
 	if (connect(sockfd, conn->ai_addr, conn->ai_addrlen) < 0)
-		fprintf(stderr, "ERROR connecting: %d\n", errno);
+		fprintf(stderr, "ERROR connecting (%s): %d\n", tag, errno);
 	return sockfd;
 }
 
-int connectTo(char *hostname, char *port) {
+int connectTo(char *hostname, char *port, char *tag) {
 	struct addrinfo hints, *conn;
 	int sockfd;
 
@@ -78,7 +79,7 @@ int connectTo(char *hostname, char *port) {
 		exit(EXIT_FAILURE);
 	}
 
-	return connectAddr(conn);
+	return connectAddr(conn, tag);
 }
 
 void socketlisten(int *listenfd, int port) {

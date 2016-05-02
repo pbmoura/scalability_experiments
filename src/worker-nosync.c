@@ -18,8 +18,12 @@ void enqueue_requests(int listen) {
 	while (1) {
 		fprintf(stderr, "%ld accepting\n", time_millis());
 		sock = accept(listen, (struct sockaddr*) NULL, NULL );
-		fprintf(stderr, "%ld LISTEN got request %d\n", time_millis(), sock);
-		Enqueue(Q, (void*)sock);
+		if (sock == -1)
+			perror("ERROR accept");
+		else {
+			fprintf(stderr, "%ld LISTEN got request %d\n", time_millis(), sock);
+			Enqueue(Q, (void*)sock);
+		}
 	}
 }
 
@@ -43,6 +47,7 @@ void* process_requests(void *arg) {
 		et = time_millis();
 		fprintf(stdout, "%ld %ld %d %d\n", st, et - st, data, sock);
 		fflush(stdout);
+		close(sock);
 	}
 	return 0;
 }
@@ -91,8 +96,12 @@ void* manage_peers_listen(void* arg) {
 	socketlisten(&listenfd, atoi(PORT_MN));
 	pthread_t t1;
 	while (1) {
+		fprintf(stderr, "%ld peers listen\n", time_millis());
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
-		pthread_create(&t1, NULL, manage_peers, (void*) connfd);
+		if (connfd == -1)
+			perror("ERROR peers listen");
+		else
+			pthread_create(&t1, NULL, manage_peers, (void*) connfd);
 	}
 	return 0;
 }

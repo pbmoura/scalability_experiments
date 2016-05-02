@@ -19,13 +19,14 @@ void onarrival();
 
 void send_worker(char* dest, int action, char* node) {
 	fprintf(stderr, "informing of action %d in node %s to %s\n", action, node, dest);
-	int sock = connectTo(dest, PORT_MN);
+	int sock = connectTo(dest, PORT_MN, "send_worker");
 	int size = sizeof(node);
 	write(sock, &action, sizeof(int));
 	if (action != 0) {
 		write(sock, &size, sizeof(int));
 		write(sock, node, size);
 	}
+	close(sock);
 }
 
 void update_workers(int action, char* node) {
@@ -89,7 +90,6 @@ Node* next_worker() {
 	iterator = workers;
 	node = iterator->value;
 	do {
-		fprintf(stderr, "next_worker loop %i\n", ((Node*)iterator->value)->queue_size);
 		if (((Node*)iterator->value)->queue_size < node->queue_size)
 			node = iterator->value;
 		iterate(&iterator);
@@ -104,7 +104,7 @@ void request_workers(char* host, int qtd) {
 	int i, size;
 	char* node;
 	fprintf(stderr, "%ld requesting %d %d %d\n", time_millis(), qtd, load, num_workers);
-	int sock = connectTo(host, PORT_PM);
+	int sock = connectTo(host, PORT_PM, "request_workers");
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i < qtd; i++) {
 		read(sock, &size, sizeof(int));
@@ -121,7 +121,7 @@ void release_workers(char* host, int qtd) {
 	int i, size;
 	char* node;
 	fprintf(stderr, "%ld releasing %d %d %d\n", time_millis(), qtd, load, num_workers);
-	int sock = connectTo(host, PORT_PM);
+	int sock = connectTo(host, PORT_PM, "release_workers");
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i > qtd; i--) {
 		node = remove_worker();
@@ -130,6 +130,7 @@ void release_workers(char* host, int qtd) {
 		write(sock, &size, sizeof(int));
 		write(sock, node, size);
 	}
+	close(sock);
 }
 
 void* monitoring(void* arg) {
@@ -169,7 +170,7 @@ void handle_request(void *arg) {
 	st = time_millis();
 	read(connfd, &data, sizeof(data));
 	fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
-	sock = connectTo(worker->name, PORT);
+	sock = connectTo(worker->name, PORT, "handle_request");
 	write(sock, &data, sizeof(data));
 	read(sock, &data, sizeof(data));
 	departureNode(worker);
@@ -179,6 +180,7 @@ void handle_request(void *arg) {
 	departure();
 	fprintf(stdout, "%ld %ld %s %d\n", st, et - st, worker->name, connfd);
 	fflush(stdout);
+	close(connfd);
 	//pthread_exit(NULL);
 	//return NULL ;
 }
@@ -191,7 +193,7 @@ int main(int argc, char *argv[]) {
 	monitoring_interval = atoi(argv[2]); //monitoring loop interval
 	fprintf(stderr, "interval %u\n", monitoring_interval);
 
-	pool = CreateThreadPool(3000);
+	pool = CreateThreadPool(2000);
 
 	init(argc, argv);
 
@@ -211,13 +213,15 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "%ld accepting\n", time_millis());
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		if (connfd == -1)
-			perror("accept");
-		arg = malloc(sizeof(int));
-		*arg = connfd;
-		aTask = malloc(sizeof(Task));
-		aTask->function = *handle_request;
-		aTask->arg = arg;
-		AddTask(pool, aTask);
+			perror("ERROR accept");
+		else {
+			arg = malloc(sizeof(int));
+			*arg = connfd;
+			aTask = malloc(sizeof(Task));
+			aTask->function = *handle_request;
+			aTask->arg = arg;
+			AddTask(pool, aTask);
+		}
 		/*ret = pthread_create(&t_req, NULL, handle_request, (void*)arg);
 		if (ret != 0)
 			fprintf(stderr, "%ld ERROR creating thread: %d\n", time_millis(), ret);*/

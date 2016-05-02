@@ -18,7 +18,7 @@ void *request(void* arg) {
 	unsigned long reply;
 
 	st = time_millis();
-	sock = connectTo(load_balancer, PORT_LB);
+	sock = connectTo(load_balancer, PORT_LB, "to lb");
 	write(sock, &counter, sizeof(counter));
 	read(sock, &reply, sizeof(reply));
 	duration = time_millis() - st;
@@ -28,6 +28,7 @@ void *request(void* arg) {
 	sem_wait(sem);
 	responses++;
 	sem_post(sem);
+	pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[]) {

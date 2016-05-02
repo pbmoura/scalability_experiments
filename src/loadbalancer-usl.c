@@ -53,13 +53,17 @@ void verify_num_workers() {
 
 	n = estimate_num_workers(num_workers, load);
 	diff = n - num_workers;
+	fprintf(stderr, "%ld diff %d\n", time_millis(), diff);
 	if (diff > 0) {
 		request_workers(pool_manager, diff);
 	} else if (diff < 0) {
 		fprintf(stderr, "estimated capacity is %d\n", n * worker_capacity);
-		if (load > n * worker_capacity) 
+		if (load > n * worker_capacity) {
 			diff = load / worker_capacity - num_workers;
-		release_workers(pool_manager, diff);
+			fprintf(stderr, "%ld diff updated %d\n", time_millis(), diff);
+		}
+		if (diff < 0)
+			release_workers(pool_manager, diff);
 	}
 	sem_wait(sem_arrival);
 	arrivals = 0;

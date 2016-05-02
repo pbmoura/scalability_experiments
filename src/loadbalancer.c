@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "connection at %ld\n", time_millis());
 			st = time_millis();
 			read(connfd, &data, sizeof(data));
-			sock = connectTo(host_name, PORT);
+			sock = connectTo(host_name, PORT, "to worker");
 			write(sock, &data, sizeof(data));
 			read(sock, &data, sizeof(data));
 			write(connfd, &data, sizeof(data));
