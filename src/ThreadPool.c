@@ -24,7 +24,7 @@ void incRunning(ThreadPool* pool) {
 void decRunning(ThreadPool* pool) {
 	pthread_mutex_lock(&(pool->mutex));
 	pool->running--;
-	fprintf(stderr, "%d threads running - dec\n", pool->running);
+	//fprintf(stderr, "%d threads running - dec\n", pool->running);
 	pthread_mutex_unlock(&(pool->mutex));
 
 }
@@ -34,8 +34,6 @@ void* threadLoop(void* arg) {
 	struct ThreadPool* pool = (struct ThreadPool*)arg;
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
-	fprintf(stderr, "starting threadLoop\n");
-
 	while(1) {
 		DequeueElement(pool->tasks, (void**)&task);
 		incRunning(pool);
