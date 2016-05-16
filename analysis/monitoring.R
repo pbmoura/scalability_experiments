@@ -1,3 +1,4 @@
+#setwd("~/github/scalability_experiments/analysis")
 source("./USL.R")
 service_time_for <- function(s1, a, b) {function(n) {s1 + s1 * a * (n-1) + s1 * b * n * (n-1) } }
 arrival_rate <- function(load, st) {load/st}
@@ -16,7 +17,7 @@ estimate_for <- function(a, b, x1) {
 usl.inverted <- function(xs, sigma, kappa) return( (-sigma + kappa +1/xs - sqrt(  (sigma - kappa - 1/xs)^2 - 4*kappa*(1-sigma) ))/(2*kappa) )
 args <- commandArgs(TRUE)
 file_name <- args[1]    
-#file_name <- "./data/step2/elastic2_30.mon"
+#file_name <- "./data/step3/uslFIFA2.mon"
 data <- read.table(file_name)
 
 
