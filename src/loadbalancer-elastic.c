@@ -18,7 +18,7 @@ void verify_num_workers();
 void onarrival();
 
 void send_worker(char* dest, int action, char* node) {
-	fprintf(stderr, "informing of action %d in node %s to %s\n", action, node, dest);
+	//fprintf(stderr, "informing of action %d in node %s to %s\n", action, node, dest);
 	int sock = connectTo(dest, PORT_MN, "send_worker");
 	int size = sizeof(node);
 	write(sock, &action, sizeof(int));
@@ -51,14 +51,12 @@ void send_workers(char* node) {
 
 void add_worker(char* name) {
 	Node* node = createNode(name);
-	fprintf(stderr, "%ld adding worker %s\n", time_millis(), name);
+	//fprintf(stderr, "%ld adding worker %s\n", time_millis(), name);
 
 	sem_wait(sem_workers);
 	if (workers == NULL ) {
-		fprintf(stderr, "creating list\n");
 		workers = createList(node, NULL);
 	} else {
-		fprintf(stderr, "inserting in list\n");
 		update_workers(1, name);
 		send_workers(name);
 		workers = createList(node, workers);
@@ -94,7 +92,7 @@ Node* next_worker() {
 			node = iterator->value;
 		iterate(&iterator);
 	} while (iterator != NULL);
-	fprintf(stderr, "next_worker returning %s %i\n", node->name, node->queue_size);
+	//fprintf(stderr, "next_worker returning %s %i\n", node->name, node->queue_size);
 	arrivalNode(node);
 	sem_post(sem_workers);
 	return node;
@@ -120,12 +118,11 @@ void request_workers(char* host, int qtd) {
 void release_workers(char* host, int qtd) {
 	int i, size;
 	char* node;
-	fprintf(stderr, "%ld releasing %d %d %d\n", time_millis(), qtd, load, num_workers);
+	//fprintf(stderr, "%ld releasing %d %d %d\n", time_millis(), qtd, load, num_workers);
 	int sock = connectTo(host, PORT_PM, "release_workers");
 	write(sock, &qtd, sizeof(int));
 	for (i = 0; i > qtd; i--) {
 		node = remove_worker();
-		fprintf(stderr, "%ld removing worker %s\n", time_millis(), node);
 		size = sizeof(node);
 		write(sock, &size, sizeof(int));
 		write(sock, node, size);
@@ -165,12 +162,15 @@ void handle_request(void *arg) {
 	Node *worker;
 	unsigned long data;
 	long st, et;
+	char label[25];
+
 	worker = next_worker();
 	arrival();
 	st = time_millis();
 	read(connfd, &data, sizeof(data));
 	fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
-	sock = connectTo(worker->name, PORT, "handle_request");
+	sprintf(label, "handle_request %s", worker->name);
+	sock = connectTo(worker->name, PORT, label);
 	write(sock, &data, sizeof(data));
 	read(sock, &data, sizeof(data));
 	departureNode(worker);
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
 	monitoring_interval = atoi(argv[2]); //monitoring loop interval
 	fprintf(stderr, "interval %u\n", monitoring_interval);
 
-	pool = CreateThreadPool(2000);
+	pool = CreateThreadPool(3000);
 
 	init(argc, argv);
 

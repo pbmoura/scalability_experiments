@@ -88,11 +88,11 @@ void* manage_peers(void* arg) {
 	}
 	close(sock);
 	pthread_mutex_unlock(&m_peers);
-	return 0;
+	pthread_exit(NULL);
 }
 
 void* manage_peers_listen(void* arg) {
-	int listenfd = 0, connfd = 0;
+	int listenfd = 0, connfd = 0, ret;
 	socketlisten(&listenfd, atoi(PORT_MN));
 	pthread_t t1;
 	while (1) {
@@ -100,8 +100,11 @@ void* manage_peers_listen(void* arg) {
 		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 		if (connfd == -1)
 			perror("ERROR peers listen");
-		else
-			pthread_create(&t1, NULL, manage_peers, (void*) connfd);
+		else {
+			ret = pthread_create(&t1, NULL, manage_peers, (void*) connfd);
+			if (ret != 0)
+				fprintf(stderr, "ERROR creating manage_peers thread: %d\n", ret);
+		}
 	}
 	return 0;
 }

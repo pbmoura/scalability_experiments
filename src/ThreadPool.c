@@ -17,7 +17,7 @@ typedef struct ThreadPool {
 void incRunning(ThreadPool* pool) {
 	pthread_mutex_lock(&(pool->mutex));
 	pool->running++;
-	fprintf(stderr, "%d threads running - inc / queue size %d\n", pool->running, QueueSize(pool->tasks));
+	fprintf(stderr, "%lu - %d threads running - inc / queue size %d\n", time_millis(), pool->running, QueueSize(pool->tasks));
 	pthread_mutex_unlock(&(pool->mutex));
 }
 

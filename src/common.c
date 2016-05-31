@@ -51,7 +51,7 @@ struct addrinfo* getConnection(char *hostname, char *port) {
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
 	hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
-	hints.ai_flags = 0;
+	hints.ai_flags = AI_CANONNAME;
 	hints.ai_protocol = 0; /* Any protocol */
 	if (getaddrinfo(addr, port, &hints, &result) != 0) {
 		fprintf(stderr, "ERROR getaddrinfo\n");  //: %s\n", gai_strerror(s));
@@ -65,7 +65,7 @@ int connectAddr(struct addrinfo *conn, char* tag) {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	//fprintf(stderr, "%ld connectingTo %s %i\n", time_millis(), tag, sockfd);
 	if (connect(sockfd, conn->ai_addr, conn->ai_addrlen) < 0)
-		fprintf(stderr, "ERROR connecting (%s): %d\n", tag, errno);
+		fprintf(stderr, "ERROR connecting to %s (%s): %d\n", conn->ai_canonname, tag, errno);
 	return sockfd;
 }
 

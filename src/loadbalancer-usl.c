@@ -13,15 +13,11 @@ double usl(int n) {
 }
 
 double arrival_rate() {
-	//fprintf(stderr, "arrival rate for %d %f\n", current_load, service_time);
-	//return current_load / service_time;
-	fprintf(stderr, "arrival rate for %u %d\n", monitoring_interval, arrivals);
 	return (float)arrivals / ((float)monitoring_interval/1000.0);
 }
 
 double estimate_workers(double x) { //x is required throughput
 	double w, delta, c = (x / x1);
-	fprintf(stderr, "workers estimate for %f\n", x);
 	if (x >= max_throughput) {
 		fprintf(stderr, "load exceeds limit\n");
 		w = max_workers;
@@ -57,10 +53,8 @@ void verify_num_workers() {
 	if (diff > 0) {
 		request_workers(pool_manager, diff);
 	} else if (diff < 0) {
-		fprintf(stderr, "estimated capacity is %d\n", n * worker_capacity);
 		if (load > n * worker_capacity) {
 			diff = load / worker_capacity - num_workers;
-			fprintf(stderr, "%ld diff updated %d\n", time_millis(), diff);
 		}
 		if (diff < 0)
 			release_workers(pool_manager, diff);
