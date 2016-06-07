@@ -36,6 +36,19 @@ long time_millis() {
 	return s * 1000 + ms;
 }
 
+long time_micro() {
+	long ms; // Milliseconds
+	time_t s;  // Seconds
+	struct timespec spec;
+
+	clock_gettime(CLOCK_MONOTONIC, &spec);
+
+	s = spec.tv_sec;
+	ms = spec.tv_nsec / 1e3;
+
+	return s * 1e6 + ms;
+}
+
 struct addrinfo* getConnection(char *hostname, char *port) {
 	struct addrinfo hints, *result;
 	char *addr, *node;
