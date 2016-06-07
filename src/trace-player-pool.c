@@ -2,7 +2,7 @@
 #include "common.c"
 #include "Queue.c"
 
-#define NUM_THREADS 3000
+#define NUM_THREADS 300
 
 char* load_balancer;
 unsigned long returned = 0;
@@ -19,23 +19,28 @@ void* request(void* arg) {
 	long st, duration;
 	int sock, queue_size;
 	unsigned long reply;
+	long delay;
 
 	sock = 0;
 	while(1) {
-		DequeueElement(queue, (void**)&args);
 		sem_wait(sem_request);
+		DequeueElement(queue, (void**)&args);
 		//t1 = time_micro();
 		queue_size = QueueSize(queue);
 
-		if(sock == 0)
+		if(sock == 0) {
+			fprintf(stderr, "connecting to lb\n");
 			sock = connectTo(load_balancer, PORT_LB, "to lb");
+		}
 		fprintf(stderr, "%lu running request %lu sleep %lu\n", time_millis(), args->counter, args->delay);
 		//fprintf(stderr, "queue size: %d\n", queue_size);
 
 		st = time_millis();
 		now = time_micro();
-		fprintf(stderr, "%lu delta %ld in request %lu\n", time_millis(), args->counter, (now-last_request));
-		usleep(args->delay - (now - last_request));
+		fprintf(stderr, "%lu delta %ld in request %lu\n", time_millis(), (now-last_request), args->counter);
+		delay = (args->delay > (now - last_request))?args->delay - (now - last_request):args->delay; 
+		fprintf(stderr, "%lu sleeping %ld\n", time_millis(), delay);
+		usleep(delay);
 		write(sock, &(args->counter), sizeof(args->counter));
 		last_request = time_micro();
 		sem_post(sem_request);
