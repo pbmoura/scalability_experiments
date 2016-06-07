@@ -13,7 +13,7 @@ lb:
 	gcc src/loadbalancer.c -o bin/loadbalancer -lrt -lpthread
 	
 elastic:
-	gcc src/loadbalancer-usl.c -o bin/elastic -lrt -lpthread -lm
+	gcc src/loadbalancer-usl.c -o bin/elastic -lrt -lpthread -lm -g
 
 load:
 	gcc src/loadbalancer-single.c -o bin/load -lrt -lpthread
