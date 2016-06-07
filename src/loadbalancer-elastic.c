@@ -2,9 +2,9 @@
 #include <sys/mman.h>
 #include <math.h>
 #include "common.c"
-//#include "Linked_list.c"
+#include "Linked_list.c"
 #include "Node.c"
-#include "ThreadPool.c"
+//#include "ThreadPool.c"
 
 int load = 0;
 int num_workers = 0;
@@ -156,7 +156,7 @@ void departure() {
 	fprintf(stderr, "%ld departure %d %d\n", time_millis(), load, num_workers);
 }
 
-void handle_request(void *arg) {
+void* handle_request(void *arg) {
 	int sock = 0;
 	int connfd =  *((int*)arg);
 	Node *worker;
@@ -164,40 +164,42 @@ void handle_request(void *arg) {
 	long st, et;
 	char label[25];
 
-	worker = next_worker();
-	arrival();
-	st = time_millis();
-	read(connfd, &data, sizeof(data));
-	fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
-	sprintf(label, "handle_request %s", worker->name);
-	sock = connectTo(worker->name, PORT, label);
-	write(sock, &data, sizeof(data));
-	read(sock, &data, sizeof(data));
-	departureNode(worker);
-	close(sock);
-	write(connfd, &data, sizeof(data));
-	et = time_millis();
-	departure();
-	fprintf(stdout, "%ld %ld %s %d\n", st, et - st, worker->name, connfd);
-	fflush(stdout);
-	close(connfd);
+	while(1) {
+		worker = next_worker();
+		arrival();
+		st = time_millis();
+		read(connfd, &data, sizeof(data));
+		fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
+		sprintf(label, "handle_request %s", worker->name);
+		sock = connectTo(worker->name, PORT, label);
+		write(sock, &data, sizeof(data));
+		read(sock, &data, sizeof(data));
+		departureNode(worker);
+		close(sock);
+		write(connfd, &data, sizeof(data));
+		et = time_millis();
+		departure();
+		fprintf(stdout, "%ld %ld %s %d\n", st, et - st, worker->name, connfd);
+		fflush(stdout);
+		//close(connfd);
+	}
 	//pthread_exit(NULL);
 	//return NULL ;
 }
 
 int main(int argc, char *argv[]) {
-	struct ThreadPool *pool;
+	//struct ThreadPool *pool;
 	struct Task *aTask;
 	int *arg;
+	int listenfd = 0, connfd = 0, ret;
 	pool_manager = argv[1];  //pool manager's hostname
 	monitoring_interval = atoi(argv[2]); //monitoring loop interval
 	fprintf(stderr, "interval %u\n", monitoring_interval);
 
-	pool = CreateThreadPool(3000);
+	//pool = CreateThreadPool(3000);
 
 	init(argc, argv);
 
-	int listenfd = 0, connfd = 0, ret;
 	pthread_t t_mon, t_req;
 
 	sem_load = createsemaphore("/sem_load", 1);
@@ -217,13 +219,9 @@ int main(int argc, char *argv[]) {
 		else {
 			arg = malloc(sizeof(int));
 			*arg = connfd;
-			aTask = malloc(sizeof(Task));
-			aTask->function = *handle_request;
-			aTask->arg = arg;
-			AddTask(pool, aTask);
+			ret = pthread_create(&t_req, NULL, handle_request, (void*)arg);
+			if (ret != 0)
+				fprintf(stderr, "%ld ERROR creating thread: %d\n", time_millis(), ret);
 		}
-		/*ret = pthread_create(&t_req, NULL, handle_request, (void*)arg);
-		if (ret != 0)
-			fprintf(stderr, "%ld ERROR creating thread: %d\n", time_millis(), ret);*/
 	}
 }
