@@ -15,7 +15,7 @@ num=0
 while [ $num != $6 ];
 do
   sleep 5
-  NODES=`preserve -llist | grep $USER | cut -f 9 | sed 's/ /,/g'`
+  NODES=`preserve -llist | grep $USER | awk '{if ($7 == "R") print $0}' | cut -f 9 | sed 's/ /,/g'`
   num=`echo $NODES |tr -s ',' '\n' | grep -c 'node'`
 done
 echo $NODES
