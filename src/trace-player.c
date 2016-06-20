@@ -1,48 +1,69 @@
 #include "common.c"
-#include "Linked_list.c"
+//#include "Linked_list.c"
+#include "HashTable.c"
 
-#define MAX 100000
-char* load_balancer;
+struct HashTable* table;
 unsigned long responses=0;
-sem_t *sem;
+int sock;
+sem_t *sem_read;
 
 typedef struct req_arg {
-	unsigned long counter, delay;
+	unsigned long counter, delay, start_time;
 }req_arg;
 
-void *request(void* arg) {
-	unsigned long delay = ((struct req_arg*)arg)->delay;
-	unsigned long counter = ((struct req_arg*)arg)->counter;
-	long st, duration;
-	int sock;
-	unsigned long reply;
+void print_table() {
+	int i;
+	Linked_list *list;
+	req_arg *arg;
+	HashItem *item;
+	printf("### start hash table ###");
+	for(i=0; i<table->size; i++) {
+		printf("\n#%i\n", i);
+		list = table->items[i];
+		while(list != NULL) {
+			item = (HashItem*)(list->value);
+			arg = (req_arg*)(item->value);
+			printf("  (%ld, %lu, %lu, %lu)\n", item->key, arg->counter, arg->delay, arg->start_time);
+			iterate(&list);
+		}
+	}
+	printf("\n### end hash table ###\n");
+}
 
-	st = time_millis();
-	sock = connectTo(load_balancer, PORT_LB, "to lb");
-	write(sock, &counter, sizeof(counter));
-	read(sock, &reply, sizeof(reply));
-	duration = time_millis() - st;
-	close(sock);
-	printf("%ld %lu %ld %lu\n", st, delay, duration, reply);
-	free(arg);
-	sem_wait(sem);
-	responses++;
-	sem_post(sem);
-	pthread_exit(NULL);
+void *handle_responses(void* arg) {
+	unsigned long end_time, duration;
+	unsigned long reply;
+	struct req_arg *args;
+	sem_t *sem;
+	sem = createsemaphore("/sem_trace", 1);
+
+	while(1) {
+		sem_wait(sem_read);
+		if(read(sock, &reply, sizeof(reply)) != -1) {
+			end_time = time_millis();
+			fprintf(stderr, "%ld received reply %lu\n", time_millis(), reply);
+			args = get(table, reply);
+			duration = end_time - args->start_time;
+			printf("%lu %lu %lu %lu\n", args->start_time, args->delay, duration, reply);
+			sem_wait(sem);
+			responses++;
+			sem_post(sem);
+		} else {
+			fprintf(stderr, "ERROR reading from socket: %d\n", errno);
+		}
+	}
 }
 
 int main(int argc, char* argv[]) {
-	load_balancer = argv[1];
+	char* load_balancer = argv[1];
 	char* file_name = argv[2];
-	int i;
 	int ret;
 	FILE *fd;
-	unsigned long delay;
 	pthread_t t1;
 	//Linked_list *threads, *node;
-	void *res;
 	unsigned long counter = 0;
 	struct req_arg *args;
+	long now, last_req, req_time, delay, sleep;
 
 	fd = fopen(file_name,"r");
 	if (fd == NULL) {
@@ -50,31 +71,44 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	//threads = createList(NULL, NULL);
-	sem = createsemaphore("/sem_trace", 1);
+	table = createHashTable(100);
 
-	while(EOF != fscanf(fd, "%lu\n", &delay)) {
-		//fprintf(stderr, "%lu waiting %ld\n", time_millis(), delay);
-		usleep(delay);
-		//t1 = malloc(sizeof(pthread_t));
+	sem_read = createsemaphore("/sem_read", 0);
+
+	sock = connectTo(load_balancer, PORT_LB, "to lb");
+
+	ret = pthread_create(&t1, NULL, handle_responses, NULL);
+	if (ret != 0)
+		fprintf(stderr, "ERROR creating thread %i\n", ret);
+
+	delay = 0;
+	last_req = time_micro();
+	while(EOF != fscanf(fd, "%ld\n", &sleep)) {
+		now = time_micro();
+		sleep -= (now - last_req - delay);
+		delay = 0;
+		if (sleep > 0) {
+			usleep(sleep);
+			last_req = now + sleep;
+		} else {
+			delay = sleep;
+			last_req = now;
+		}
+		//usleep(delay - (now - last_req));
+		req_time = time_millis();
+		//last_req = req_time - (req_time - now - delay);
+		write(sock, &counter, sizeof(counter));
+		sem_post(sem_read);
+		fprintf(stderr, "%ld running request %lu sleep %ld  %ld  %ld\n", req_time, counter, sleep, now, last_req);
 		args = malloc(sizeof(struct req_arg));
-		args->counter = counter++;
-		args->delay = delay;
-		ret = pthread_create(&t1, NULL, request, (void *) args);
-		if (ret != 0)
-			fprintf(stderr, "ERROR creating thread %i\n", ret);
-		//else
-		//	insertAfter(t1, threads);
+		args->counter = counter;
+		args->delay = sleep;
+		args->start_time = last_req/1000;
+		put(table, counter++, args);
 	}
 	fprintf(stderr, "%lu workload finished\n", time_millis());
 	while (responses < counter) {
 		fprintf(stderr, "%lu < %lu\n", responses, counter);
-		sleep(1);
+		usleep(1000000);
 	}
-	/*for(node = threads->next; node != NULL; node = node->next) {
-		fprintf(stderr, "%lu join ", time_millis());
-		t1 = (pthread_t*)(node->value);
-		fprintf(stderr, "%ld\n", t1);
-		pthread_join(*t1, &res);
-	}*/
 }

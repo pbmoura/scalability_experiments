@@ -4,15 +4,15 @@
 #include "common.c"
 #include "Linked_list.c"
 #include "Node.c"
-//#include "ThreadPool.c"
 
-int load = 0;
-int num_workers = 0;
+int load = 0, connfd = 0, num_workers = 0;
 Linked_list *workers = NULL;
-sem_t *sem_load, *sem_workers;
+sem_t *sem_load, *sem_workers, *sem_reply;
 char* pool_manager;
 unsigned int monitoring_interval;
+void* handle_request(void *arg);
 
+//abstract functions
 void init(int argc, char *argv[]);
 void verify_num_workers();
 void onarrival();
@@ -50,7 +50,17 @@ void send_workers(char* node) {
 }
 
 void add_worker(char* name) {
-	Node* node = createNode(name);
+	Node* node;
+	int sock, ret;
+	char label[25];
+	pthread_t t_req;
+	//sprintf(label, "add_worker %s", name);
+	sock = connectTo(name, PORT, label);
+	node = createNode(name, sock, 0);
+	ret = pthread_create(&t_req, NULL, handle_request, (void*)node);
+	if (ret != 0)
+		fprintf(stderr, "%ld ERROR creating thread: %d\n", time_millis(), ret);
+	node->thread = t_req;
 	//fprintf(stderr, "%ld adding worker %s\n", time_millis(), name);
 
 	sem_wait(sem_workers);
@@ -66,12 +76,14 @@ void add_worker(char* name) {
 }
 
 char* remove_worker() {
-	Linked_list *node;
+	//Linked_list *node;
 	char* name;
+	Node* node;
 	sem_wait(sem_workers);
 	//node = removeNext(workers);
-	node = workers;
-	name = ((Node*)node->value)->name;
+	node = (Node*)(workers->value);
+	name = node->name;
+	pthread_cancel(node->thread);
 	free(node);
 	iterate(&workers);
 	update_workers(-1, name);
@@ -157,53 +169,45 @@ void departure() {
 }
 
 void* handle_request(void *arg) {
+	Node *worker = (Node*)arg;
 	int sock = 0;
-	int connfd =  *((int*)arg);
-	Node *worker;
 	unsigned long data;
-	long st, et;
-	char label[25];
+	long et;
 
 	while(1) {
-		worker = next_worker();
-		arrival();
-		st = time_millis();
-		read(connfd, &data, sizeof(data));
-		fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
-		sprintf(label, "handle_request %s", worker->name);
-		sock = connectTo(worker->name, PORT, label);
-		write(sock, &data, sizeof(data));
-		read(sock, &data, sizeof(data));
+		sem_wait(worker->sem_read);
+		read(worker->socket, &data, sizeof(data));
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 		departureNode(worker);
-		close(sock);
+		sem_wait(sem_reply);
 		write(connfd, &data, sizeof(data));
+		sem_post(sem_reply);
 		et = time_millis();
 		departure();
-		fprintf(stdout, "%ld %ld %s %d\n", st, et - st, worker->name, connfd);
+		fprintf(stdout, "%ld %lu %d\n", et, data, worker->socket);
 		fflush(stdout);
-		//close(connfd);
+		if (worker->queue_size == 0)
+			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 	}
-	//pthread_exit(NULL);
-	//return NULL ;
 }
 
 int main(int argc, char *argv[]) {
 	//struct ThreadPool *pool;
 	struct Task *aTask;
-	int *arg;
-	int listenfd = 0, connfd = 0, ret;
+	int listenfd = 0;
+	Node *worker;
+	unsigned long data;
+	pthread_t t_mon, t_req;
 	pool_manager = argv[1];  //pool manager's hostname
 	monitoring_interval = atoi(argv[2]); //monitoring loop interval
 	fprintf(stderr, "interval %u\n", monitoring_interval);
 
-	//pool = CreateThreadPool(3000);
-
 	init(argc, argv);
 
-	pthread_t t_mon, t_req;
 
 	sem_load = createsemaphore("/sem_load", 1);
 	sem_workers = createsemaphore("/sem_workers", 1);
+	sem_reply = createsemaphore("sem_reply", 1);
 
 	request_workers(pool_manager, 1);
 
@@ -211,17 +215,18 @@ int main(int argc, char *argv[]) {
 
 	fflush(stdout);
 	pthread_create(&t_mon, NULL, monitoring, NULL);
+	fprintf(stderr, "%ld accepting\n", time_millis());
+	connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
+	if (connfd == -1) {
+		perror("ERROR accept");
+		exit(1);
+	}
 	while (1) {
-		fprintf(stderr, "%ld accepting\n", time_millis());
-		connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
-		if (connfd == -1)
-			perror("ERROR accept");
-		else {
-			arg = malloc(sizeof(int));
-			*arg = connfd;
-			ret = pthread_create(&t_req, NULL, handle_request, (void*)arg);
-			if (ret != 0)
-				fprintf(stderr, "%ld ERROR creating thread: %d\n", time_millis(), ret);
-		}
+		read(connfd, &data, sizeof(data));
+		worker = next_worker();
+		arrival();
+		fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
+		write(worker->socket, &data, sizeof(data));
+		sem_post(worker->sem_read);
 	}
 }
