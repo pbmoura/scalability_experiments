@@ -3,6 +3,7 @@
 #include <sys/mman.h>
 #include <pthread.h>
 #include <math.h>
+#include <semaphore.h>
 
 #include "common.c"
 #include "Queue.c"
@@ -12,42 +13,55 @@ Linked_list *tail = NULL;
 char *hostname;
 pthread_mutex_t m_peers;
 long task_time_micro, num_peers, contention, coherency;
+int sock=0, working=0;
+sem_t *sem_read;
 
-void enqueue_requests(int listen) {
-	int sock;
-	while (1) {
+void* accept_connections(void *arg) {
+	int listenfd = *((int*)arg);
+	while(1) {
 		fprintf(stderr, "%ld accepting\n", time_millis());
-		sock = accept(listen, (struct sockaddr*) NULL, NULL );
-		if (sock == -1)
+		sock = accept(listenfd, (struct sockaddr*) NULL, NULL );
+		if (sock == -1) {
 			perror("ERROR accept");
-		else {
-			fprintf(stderr, "%ld LISTEN got request %d\n", time_millis(), sock);
-			Enqueue(Q, (void*)sock);
+			exit(1);
 		}
+		sem_post(sem_read);
+		working = 1;
+		fprintf(stderr, "%ld accepted\n", time_millis());
+	}
+}
+
+void enqueue_requests() {
+	unsigned long data;
+	while (1) {
+		fprintf(stderr, "%ld waiting for request\n", time_millis());
+		if(working == 0)
+			sem_wait(sem_read);
+		read(sock, &data, sizeof(data));
+		fprintf(stderr, "%ld LISTEN got request %lu\n", time_millis(), data);
+		Enqueue(Q, (void*)data);
 	}
 }
 
 void* process_requests(void *arg) {
-	int i, sock, sem_value;
+	//int sock = *((int*)arg);
+	int i, sem_value;
 	unsigned long data;
 	long st, et, task_time;
 	while (1) {
 		fprintf(stderr, "%ld process_request\n", time_millis());
-		DequeueElement(Q, (void**)&sock);
-		fprintf(stderr, "%ld processing %d\n", time_millis(), sock);
+		DequeueElement(Q, (void**)&data);
+		fprintf(stderr, "%ld processing %lu\n", time_millis(), data);
 		st = time_millis();
-		read(sock, &data, sizeof(data));
-		fprintf(stderr, "%ld read %d\n", time_millis(), data);
 		//task execution
 		task_time = task_time_micro + (num_peers-1)*contention + (num_peers-1)*num_peers*coherency;
 		fprintf(stderr, "sleeping for %ld micro\n", task_time);
 		usleep(task_time);
-		fprintf(stderr, "%ld replying %d\n", time_millis(), sock);
+		fprintf(stderr, "%ld replying %lu\n", time_millis(), data);
 		write(sock, &data, sizeof(data));
 		et = time_millis();
 		fprintf(stdout, "%ld %ld %d %d\n", st, et - st, data, sock);
 		fflush(stdout);
-		close(sock);
 	}
 	return 0;
 }
@@ -79,6 +93,7 @@ void* manage_peers(void* arg) {
 					time_millis());
 			destroyList(tail);
 			num_peers = 0;
+			working = 0;
 		} else {
 			fprintf(stderr, "%ld removing %s from my peers\n", time_millis(),
 					name);
@@ -133,6 +148,7 @@ int main(int argc, char *argv[]) {
 	//get hostname
 	hostname = malloc(8);
 	gethostname(hostname, 8);
+	sem_read = createsemaphore("/sem_read", 0);
 
 	if (argc > 5) {
 		peers = argv[5];
@@ -167,9 +183,12 @@ int main(int argc, char *argv[]) {
 	pthread_create(&t1, NULL, manage_peers_listen, NULL );
 
 	socketlisten(&listenfd, atoi(PORT));
+	if((pt_result = pthread_create(&t2, NULL, accept_connections, (void*)&listenfd )) != 0)
+		fprintf(stderr, "ERROR opening accept thread: %i\n", pt_result);
 
 	for (i = 0; i < n_processes; i++)
-		if((pt_result = pthread_create(&t2, NULL, process_requests, NULL )) != 0)
+		if((pt_result = pthread_create(&t2, NULL, process_requests, NULL)) != 0)
 			fprintf(stderr, "ERROR opening thread: %i\n", pt_result);
-	enqueue_requests(listenfd);
+	fprintf(stderr, "%ld created %d threads\n", time_millis(), n_processes);
+	enqueue_requests();
 }
