@@ -1,3 +1,5 @@
+#ifndef LINKED_LIST
+#define LINKED_LIST
 #include <stdio.h>
 
 
@@ -59,3 +61,4 @@ void destroyList(Linked_list *list) {
 		free(node);
 	}
 }
+#endif

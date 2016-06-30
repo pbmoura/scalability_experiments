@@ -12,6 +12,7 @@ Queue *Q;
 Linked_list *tail = NULL;
 char *hostname;
 pthread_mutex_t m_peers;
+long contention, coherency, num_peers;
 long task_time_micro;
 typedef struct sync_args {
 	char* port;
@@ -40,7 +41,7 @@ void synchronize(int hops, char* port) {
 	do { //while (strcmp(hostname, hosts->name) != 0) {
 		name = (char*)node->value;
 		fprintf(stderr, "%ld synch %d %s\n", time_millis(), hops, name);
-		serverfd = connectTo(name, port);
+		serverfd = connectTo(name, port, "synchronize");
 		write(serverfd, &hops, sizeof(int));
 		read(serverfd, &hops, sizeof(int));
 		close(serverfd);
@@ -51,7 +52,7 @@ void synchronize(int hops, char* port) {
 
 void* process_requests(void *arg) {
 	int i, sock, data, sem_value;
-	long st, et;
+	long st, et, task_time;
 	while (1) {
 		fprintf(stderr, "%ld process_request\n", time_millis());
 		DequeueElement(Q, (void**)&sock);
@@ -60,12 +61,13 @@ void* process_requests(void *arg) {
 		read(sock, &data, sizeof(data));
 		fprintf(stderr, "%ld read %d\n", time_millis(), data);
 		//contention
-		synchronize(1, PORT_SER);
+		//synchronize(1, PORT_SER);
 		//task execution
 		fprintf(stderr, "sleeping for %ld micro\n", task_time_micro);
-		usleep(task_time_micro);
+		task_time = task_time_micro + (num_peers-1)*contention + (num_peers-1)*num_peers*coherency;
+		usleep(task_time);
 		//coherency
-		synchronize(2, PORT_PAR);
+		//synchronize(2, PORT_PAR);
 		fprintf(stderr, "%ld replying %d\n", time_millis(), sock);
 		write(sock, &data, sizeof(int));
 		et = time_millis();
@@ -129,6 +131,7 @@ void add_peer(char* name) {
 		tail = createCircularList(name);
 	else
 		tail = insertAfter(name, tail);
+	num_peers++;
 }
 
 void* manage_peers(void* arg) {
@@ -148,10 +151,12 @@ void* manage_peers(void* arg) {
 					"%ld going back to pool. destroying my peers list\n",
 					time_millis());
 			destroyList(tail);
+			num_peers = 0;
 		} else {
 			fprintf(stderr, "%ld removing %s from my peers\n", time_millis(),
 					name);
 			removeNode(name, tail);
+			num_peers--;
 		}
 	}
 	close(sock);
@@ -171,8 +176,8 @@ void* manage_peers_listen(void* arg) {
 }
 
 int main(int argc, char *argv[]) {
-	long contention = atol(argv[1]);
-	long coherency = atol(argv[2]);
+	contention = atol(argv[1]);
+	coherency = atol(argv[2]);
 	int n_processes = atoi(argv[3]);
 	double s1 = atof(argv[4]);
 	char *peers;

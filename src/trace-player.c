@@ -48,6 +48,7 @@ void *handle_responses(void* arg) {
 			sem_wait(sem);
 			responses++;
 			sem_post(sem);
+			free(args);
 		} else {
 			fprintf(stderr, "ERROR reading from socket: %d\n", errno);
 		}

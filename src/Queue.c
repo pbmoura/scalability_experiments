@@ -33,6 +33,9 @@ Queue * createQueue(size_t elementSize) {
 
 	return Q;
 }
+int QueueIsEmpty(Queue *Q) {
+	return (Q->front == Q->rear);
+}
 void Dequeue(Queue *Q) {
 	if (QueueIsEmpty(Q)) {
 		fprintf(stderr, "ERROR: Dequeueing from empty queue\n");
@@ -66,10 +69,6 @@ void Enqueue(Queue *Q, void* element) {
 	pthread_mutex_unlock(&(Q->mutex));
 	sem_post(Q->sem);
 	return;
-}
-int QueueIsEmpty(Queue *Q) {
-	return (Q->front == Q->rear);
-	//return QueueSize(Q);
 }
 int QueueSize(Queue *Q) {
 	int size;

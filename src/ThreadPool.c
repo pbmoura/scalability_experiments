@@ -72,7 +72,11 @@ void DestroyThreadPool(ThreadPool *pool) {
 	}
 }
 
-void AddTask(ThreadPool* pool, Task* task) {
+void AddTask(ThreadPool* pool, void (*function) (void*) fun, void* arg) {
+	Task *task;
+	task = malloc(sizeof(Task));
+	task->function = fun;
+	task->arg = arg;
 	Enqueue(pool->tasks, task);
 }
 
