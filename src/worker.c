@@ -12,7 +12,7 @@ Queue *Q;
 Linked_list *tail = NULL;
 char *hostname;
 pthread_mutex_t m_peers;
-long contention, coherency, num_peers;
+long contention, coherency, num_peers = 1;
 long task_time_micro;
 typedef struct sync_args {
 	char* port;
@@ -63,8 +63,9 @@ void* process_requests(void *arg) {
 		//contention
 		//synchronize(1, PORT_SER);
 		//task execution
-		fprintf(stderr, "sleeping for %ld micro\n", task_time_micro);
+		fprintf(stderr, "%ld task_time params %ld %ld %ld %ld\n", time_millis(), task_time_micro, num_peers, contention, coherency);
 		task_time = task_time_micro + (num_peers-1)*contention + (num_peers-1)*num_peers*coherency;
+		fprintf(stderr, "sleeping for %ld micro\n", task_time);
 		usleep(task_time);
 		//coherency
 		//synchronize(2, PORT_PAR);
@@ -191,6 +192,7 @@ int main(int argc, char *argv[]) {
 	int pt_result;
 
 	task_time_micro = lrint(s1 * 1000000);
+	fprintf(stderr, "task_time_micro = %ld\n", task_time_micro);
 
 	Q = createQueue(sizeof(int));
 	pthread_mutex_init(&m_peers, NULL );

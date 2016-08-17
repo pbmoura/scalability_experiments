@@ -12,9 +12,9 @@ void* process_request(void* arg) {
 	fprintf(stderr, "%ld requested %d\n", time_millis(), qtd);
 	if(qtd > 0) {
 		for(i = 0; i<qtd; i++) {
-			fprintf(stderr, "getting node %i\n", i);
+			//fprintf(stderr, "getting node %i\n", i);
 			DequeueElement(nodes, (void*)&node);
-			fprintf(stderr, "got %s\n", node);
+			//fprintf(stderr, "got %s\n", node);
 			size = sizeof(node);
 			write(socket, &size, sizeof(int));
 			write(socket, node, size);
@@ -26,7 +26,7 @@ void* process_request(void* arg) {
 			node = malloc(size);
 			read(socket, node, sizeof(node));
 			Enqueue(nodes, node);
-			fprintf(stderr, "received %s\n", node);
+			fprintf(stderr, "received %s.\n", node);
 		}
 	}
 	close(socket);

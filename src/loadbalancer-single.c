@@ -3,9 +3,10 @@
 double limit_max, limit_min;
 
 void init(int argc, char *argv[]) {
+	fprintf(stderr, "init %s, %s\n", argv[3], argv[4]);
 	limit_min = atof(argv[3]);
 	limit_max = atof(argv[4]);
-	fprintf(stderr, "load limits %i - %i\n", limit_min, limit_max);
+	fprintf(stderr, "load limits %f - %f	\n", limit_min, limit_max);
 }
 
 void verify_num_workers() {

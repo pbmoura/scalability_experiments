@@ -54,11 +54,13 @@ Linked_list* removeNode(char* value, Linked_list *list) {
 }
 
 void destroyList(Linked_list *list) {
-	Linked_list *node;
-	while(list != NULL) {
+	Linked_list *node, *first;
+	first = list;
+	//while(list != NULL) 
+	do {
 		node = list;
 		iterate(&list);
 		free(node);
-	}
+	} while(list != first && list != NULL);
 }
 #endif
