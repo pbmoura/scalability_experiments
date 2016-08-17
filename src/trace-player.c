@@ -33,23 +33,33 @@ void print_table() {
 void *handle_responses(void* arg) {
 	unsigned long end_time, duration;
 	unsigned long reply;
+	int bytes_read;
 	struct req_arg *args;
 	sem_t *sem;
 	sem = createsemaphore("/sem_trace", 1);
 
 	while(1) {
-		sem_wait(sem_read);
-		if(read(sock, &reply, sizeof(reply)) != -1) {
-			end_time = time_millis();
-			fprintf(stderr, "%ld received reply %lu\n", time_millis(), reply);
-			args = get(table, reply);
-			duration = end_time - args->start_time;
-			printf("%lu %lu %lu %lu\n", args->start_time, args->delay, duration, reply);
-			sem_wait(sem);
-			responses++;
-			sem_post(sem);
-		} else {
-			fprintf(stderr, "ERROR reading from socket: %d\n", errno);
+		//sem_wait(sem_read);
+		bytes_read = read(sock, &reply, sizeof(reply));
+		switch(bytes_read) {
+			case -1:
+				fprintf(stderr, "ERROR reading from socket: %d\n", errno);
+				break;
+			case 0: break;
+			default:
+				end_time = time_millis();
+				fprintf(stderr, "%ld received reply %lu\n", time_millis(), reply);
+				args = get(table, reply);
+				if (args == NULL ) {
+					fprintf(stderr, "%ld got NULL with %lu\n", time_millis(), reply);
+				} else {
+					duration = end_time - args->start_time;
+					printf("%lu %lu %lu %lu\n", args->start_time, args->delay, duration, reply);
+					sem_wait(sem);
+					responses++;
+					sem_post(sem);
+				}
+				free(args);
 		}
 	}
 }
@@ -73,7 +83,7 @@ int main(int argc, char* argv[]) {
 
 	table = createHashTable(100);
 
-	sem_read = createsemaphore("/sem_read", 0);
+	//sem_read = createsemaphore("/sem_read", 0);
 
 	sock = connectTo(load_balancer, PORT_LB, "to lb");
 
@@ -98,7 +108,7 @@ int main(int argc, char* argv[]) {
 		req_time = time_millis();
 		//last_req = req_time - (req_time - now - delay);
 		write(sock, &counter, sizeof(counter));
-		sem_post(sem_read);
+		//sem_post(sem_read);
 		fprintf(stderr, "%ld running request %lu sleep %ld  %ld  %ld\n", req_time, counter, sleep, now, last_req);
 		args = malloc(sizeof(struct req_arg));
 		args->counter = counter;

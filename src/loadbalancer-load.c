@@ -3,6 +3,7 @@
 int limit_max, limit_min;
 
 void init(int argc, char *argv[]) {
+	fprintf(stderr, "init %s - %s\n", argv[3], argv[4]);
 	limit_min = atoi(argv[3]);
 	limit_max = atoi(argv[4]);
 	fprintf(stderr, "load limits %i - %i\n", limit_min, limit_max);

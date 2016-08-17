@@ -83,10 +83,10 @@ char* remove_worker() {
 	//node = removeNext(workers);
 	node = (Node*)(workers->value);
 	name = node->name;
+	update_workers(-1, name);
 	pthread_cancel(node->thread);
 	free(node);
 	iterate(&workers);
-	update_workers(-1, name);
 	num_workers--;
 	sem_post(sem_workers);
 	return name;
@@ -138,6 +138,8 @@ void release_workers(char* host, int qtd) {
 		size = sizeof(node);
 		write(sock, &size, sizeof(int));
 		write(sock, node, size);
+		fprintf(stderr, "%ld removing worker %s\n", time_millis(), node);
+		free(node);
 	}
 	close(sock);
 }
@@ -170,25 +172,40 @@ void departure() {
 
 void* handle_request(void *arg) {
 	Node *worker = (Node*)arg;
-	int sock = 0;
+	int sock = 0, bytes_read;
 	unsigned long data;
 	long et;
 
 	while(1) {
-		sem_wait(worker->sem_read);
-		read(worker->socket, &data, sizeof(data));
-		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-		departureNode(worker);
-		sem_wait(sem_reply);
-		write(connfd, &data, sizeof(data));
-		sem_post(sem_reply);
-		et = time_millis();
-		departure();
-		fprintf(stdout, "%ld %lu %d\n", et, data, worker->socket);
-		fflush(stdout);
-		if (worker->queue_size == 0)
-			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+		//sem_wait(worker->sem_read);
+		bytes_read = read(worker->socket, &data, sizeof(data));
+		switch(bytes_read) {
+			case -1: fprintf(stderr, "ERROR reading from worker %s: %d\n", worker->name, errno);
+				break;
+			case 0: //fprintf(stderr, "read 0 from workers\n");
+				break;
+			default:
+				fprintf(stderr, "%ld got reply %lu\n", time_millis(), data);
+				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+				departureNode(worker);
+				sem_wait(sem_reply);
+				write(connfd, &data, sizeof(data));
+				sem_post(sem_reply);
+				et = time_millis();
+				departure();
+				fprintf(stdout, "%ld %lu %d\n", et, data, worker->socket);
+				fflush(stdout);
+				if (worker->queue_size == 0)
+					pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+		}
 	}
+}
+
+void* initial_monitoring(void* arg) {
+	pthread_t t_mon;
+	sleep(60);
+	verify_num_workers();
+	pthread_create(&t_mon, NULL, monitoring, NULL);
 }
 
 int main(int argc, char *argv[]) {
@@ -214,7 +231,8 @@ int main(int argc, char *argv[]) {
 	socketlisten(&listenfd, atoi(PORT_LB));
 
 	fflush(stdout);
-	pthread_create(&t_mon, NULL, monitoring, NULL);
+	//pthread_create(&t_mon, NULL, monitoring, NULL);
+	pthread_create(&t_mon, NULL, initial_monitoring, NULL);
 	fprintf(stderr, "%ld accepting\n", time_millis());
 	connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 	if (connfd == -1) {
@@ -226,7 +244,8 @@ int main(int argc, char *argv[]) {
 		worker = next_worker();
 		arrival();
 		fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
-		write(worker->socket, &data, sizeof(data));
-		sem_post(worker->sem_read);
+		if(write(worker->socket, &data, sizeof(data)) == -1)
+			fprintf(stderr, "ERROR writing to %s: %d\n", worker->name, errno);
+		//sem_post(worker->sem_read);
 	}
 }

@@ -1,0 +1,86 @@
+#include <signal.h>
+#include "common.c"
+#include "Queue.c"
+
+#define NUM_THREADS 1000
+
+char* load_balancer;
+unsigned long returned = 0;
+sem_t *sem, *sem_result;
+Queue *queue;
+
+typedef struct req_arg {
+	unsigned long counter, delay;
+}req_arg;
+
+void* request(void* arg) {
+	struct req_arg *args;
+	long st, duration;
+	int sock;
+	unsigned long reply;
+
+	while(1) {
+		DequeueElement(queue, (void**)&args);
+
+		fprintf(stderr, "%lu running request %lu after %lu\n", time_millis(), args->counter, args->delay);
+
+		st = time_millis();
+		sock = connectTo(load_balancer, PORT_LB, "to lb");
+		write(sock, &(args->counter), sizeof(args->counter));
+		read(sock, &reply, sizeof(reply));
+		duration = time_millis() - st;
+		close(sock);
+		sem_wait(sem_result);
+		fprintf(stdout, "%ld %lu %ld %lu\n", st, args->delay, duration, reply);
+		fflush(stdout);
+		sem_post(sem_result);
+		sem_wait(sem);
+		returned++;
+		sem_post(sem);
+		free(args);
+	}
+}
+
+int main(int argc, char* argv[]) {
+	load_balancer = argv[1];
+	char* file_name = argv[2];
+	int i;
+	FILE *fd;
+	unsigned long delay;
+	unsigned long counter = 0;
+	struct req_arg *args;
+	pthread_t t1;
+	int cr_t;
+	//signal(SIGPIPE, SIG_IGN);
+	
+	fprintf(stderr, "load balancer: '%s'\n", load_balancer);
+
+	queue = createQueue(sizeof(args));
+
+	sem = createsemaphore("/sem_trace", 1);
+	sem_result = createsemaphore("/sem_result", 1);
+
+	fd = fopen(file_name,"r");
+	if (fd == NULL) {
+		fprintf(stderr, "Error opening file %s\n", file_name);
+		exit(1);
+	}
+
+	for (i=0; i<NUM_THREADS; i++) 
+		if ((cr_t = pthread_create(&t1, NULL, request, NULL)) != 0)
+			fprintf(stderr, "ERROR creating thread: %i\n", cr_t);
+
+	while(EOF != fscanf(fd, "%lu\n", &delay)) {
+		usleep(delay);
+		args = malloc(sizeof(struct req_arg));
+		args->counter = counter++;
+		args->delay = delay;
+		Enqueue(queue, (void*)args);
+	}
+	fprintf(stderr, "%lu workload finished\n", time_millis());
+	while (returned < counter) {
+		fprintf(stderr, "%lu < %lu\n", returned, counter);
+		sleep(1);
+	}
+	fprintf(stderr, "finished with %lu of %lu\n", returned, counter);
+}

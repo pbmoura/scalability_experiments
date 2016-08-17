@@ -15,9 +15,33 @@ pthread_mutex_t m_peers;
 long task_time_micro, num_peers, contention, coherency;
 int sock=0, working=0;
 sem_t *sem_read;
+pthread_t t_enqueue;
+
+void* enqueue_requests(void* arg) {
+	unsigned long data;
+	int bytes_read;
+	while (1) {
+		fprintf(stderr, "%ld waiting for request\n", time_millis());
+		//if(working == 0) {
+		//	fprintf(stderr, "before sem_wait\n");
+		//	sem_wait(sem_read);
+		//	fprintf(stderr, "after sem_wait\n");
+		//}
+		bytes_read = read(sock, &data, sizeof(data));
+		switch(bytes_read) {
+			case -1:
+				fprintf(stderr, "ERROR reading from lb: %d\n", errno);
+				break;
+			case 0: break;
+			default:
+				fprintf(stderr, "%ld LISTEN got request %lu\n", time_millis(), data);
+				Enqueue(Q, (void*)data);
+		}
+	}
+}
 
 void* accept_connections(void *arg) {
-	int listenfd = *((int*)arg);
+	int pt_result, listenfd = *((int*)arg);
 	while(1) {
 		fprintf(stderr, "%ld accepting\n", time_millis());
 		sock = accept(listenfd, (struct sockaddr*) NULL, NULL );
@@ -25,21 +49,12 @@ void* accept_connections(void *arg) {
 			perror("ERROR accept");
 			exit(1);
 		}
-		sem_post(sem_read);
-		working = 1;
 		fprintf(stderr, "%ld accepted\n", time_millis());
-	}
-}
-
-void enqueue_requests() {
-	unsigned long data;
-	while (1) {
-		fprintf(stderr, "%ld waiting for request\n", time_millis());
-		if(working == 0)
-			sem_wait(sem_read);
-		read(sock, &data, sizeof(data));
-		fprintf(stderr, "%ld LISTEN got request %lu\n", time_millis(), data);
-		Enqueue(Q, (void*)data);
+		//sem_post(sem_read);
+		//fprintf(stderr, "sem_post\n");
+		//working = 1;
+		if((pt_result = pthread_create(&t_enqueue, NULL, enqueue_requests, NULL)) != 0)
+			fprintf(stderr, "ERROR creating thread enqueue_requests: %d\n", pt_result);
 	}
 }
 
@@ -58,7 +73,8 @@ void* process_requests(void *arg) {
 		fprintf(stderr, "sleeping for %ld micro\n", task_time);
 		usleep(task_time);
 		fprintf(stderr, "%ld replying %lu\n", time_millis(), data);
-		write(sock, &data, sizeof(data));
+		if(write(sock, &data, sizeof(data)) == -1)
+			fprintf(stderr, "ERROR writing to lb: %d\n", errno);
 		et = time_millis();
 		fprintf(stdout, "%ld %ld %d %d\n", st, et - st, data, sock);
 		fflush(stdout);
@@ -92,8 +108,10 @@ void* manage_peers(void* arg) {
 					"%ld going back to pool. destroying my peers list\n",
 					time_millis());
 			destroyList(tail);
+			tail = NULL;
 			num_peers = 0;
-			working = 0;
+			//working = 0;
+			pthread_cancel(t_enqueue);
 		} else {
 			fprintf(stderr, "%ld removing %s from my peers\n", time_millis(),
 					name);
@@ -143,11 +161,12 @@ int main(int argc, char *argv[]) {
 
 	Q = createQueue(sizeof(int));
 	pthread_mutex_init(&m_peers, NULL );
-	num_peers = 0;
+	num_peers = 1;
 
 	//get hostname
 	hostname = malloc(8);
 	gethostname(hostname, 8);
+	fprintf(stderr, "my hostname is %s\n", hostname);
 	sem_read = createsemaphore("/sem_read", 0);
 
 	if (argc > 5) {
@@ -183,12 +202,13 @@ int main(int argc, char *argv[]) {
 	pthread_create(&t1, NULL, manage_peers_listen, NULL );
 
 	socketlisten(&listenfd, atoi(PORT));
-	if((pt_result = pthread_create(&t2, NULL, accept_connections, (void*)&listenfd )) != 0)
-		fprintf(stderr, "ERROR opening accept thread: %i\n", pt_result);
+	//if((pt_result = pthread_create(&t2, NULL, accept_connections, (void*)&listenfd )) != 0)
+	//	fprintf(stderr, "ERROR opening accept thread: %i\n", pt_result);
 
 	for (i = 0; i < n_processes; i++)
 		if((pt_result = pthread_create(&t2, NULL, process_requests, NULL)) != 0)
 			fprintf(stderr, "ERROR opening thread: %i\n", pt_result);
 	fprintf(stderr, "%ld created %d threads\n", time_millis(), n_processes);
-	enqueue_requests();
+	//enqueue_requests();
+	accept_connections((void*)&listenfd);
 }
