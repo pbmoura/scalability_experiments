@@ -11,17 +11,32 @@ file_name3 <- args[3]
 #file_name2 <- './data/step2/elastic3c_20.ad'
 #file_name3 <- './data/step2/elastic3c_20.hand'
 
+#file_name1 <- './data/step3/usl1000.mon'
+#file_name3 <- './data/step3/usl600.hand'
 
-file_name1 <- './data/step3/uslTEST2.mon'
-file_name3 <- './data/step3/uslTEST2.hand'
+
+file_name1 <- './data/step3/uslFIFA63d/arrival-departure'
+file_name2 <- './data/step3/singleFIFA63d/arrival-departure'
+file_name3 <- './data/step3/uslFIFA63c/handling'
+
+file_name4 <- './data/step3/uslFIFA63c-old/handling'
+
 
 
 data1 <- read.table(file_name1)
 data2 <- read.table(file_name2)
 data3 <- read.table(file_name3)
+data4 <- read.table(file_name4)
 
+reqs <- read.table('./data/step3/uslFIFA63c-old/day63c.reqs')
+plot(reqs$V1, type='l')
 wd <- workload(data3)
-#plot(wd)
+wp <- workload(data4)
+as.vector(wd[1:min(length(wd), length(wp))])-as.vector(wp[1:min(length(wd), length(wp))])
+#plot(wd, type = 'l')
+#plot(wp, type = 'l')
+#lines(wd, col='blue', type='l')
+#lines(wp, col='red', type='l')
 time_sec1 <- (data1$V1-data1[1,1])/1000
 time_sec2 <- (data2$V1-data2[1,1])/1000
 

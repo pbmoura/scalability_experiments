@@ -3,31 +3,36 @@
 source("./common.R")
 
 file_name1 <- './data/step3/uslFIFA63c-old/day63c.reqs'
-file_name1 <- './data/step3/uslFIFA63d/day63d.reqs'
+file_name1 <- './data/step3/day63d.reqs'
 
-file_name3 <- './data/step3/uslFIFA63d/handling'
-file_name4 <- './data/step3/uslFIFA63d/player'
+file_name3 <- './data/step3/singleFIFA63d/handling'
+file_name3 <- './data/step3/uslFIFA63d/1/handling'
+file_name3 <- './data/step4/10/handling'
+
+file_name4 <- './data/step3/uslFIFA53c/player'
 
 file_name3 <- './data/step3/uslFIFA63c.reqs'
 file_name3 <- './data/step3/test.player'
 file_name4 <- './data/step3/uslFIFA63c.hand'
 
 
+reqs <- read.table(file_name1)
+plot(reqs$V1, type='l', ylim=c(0,750), ylab='req/sec', xlab="time(sec)")
+plot_over(reqs$V1, type='l', ylim=c(0,750), ylab='req/sec')
 
 data3 <- read.table(file_name3)
+wd <- workload(data3)
+lines(wd, col='blue', type='l')
+diff <- as.vector(wd[1:min(length(wd), length(reqs$V1))])-as.vector(reqs$V1[1:min(length(wd), length(reqs$V1))])
+lines(abs(diff), col='green', type='l')
+
 data4 <- read.table(file_name4)
 
-reqs <- read.table(file_name1)
-plot(reqs$V1, type='l', ylim=c(0,750))
 #data4$V1 = data4$V1/1000
-wd <- workload(data3)
 wp <- workload(data4)
-lines(wd, col='blue', type='l')
 lines(wp, col='red', type='l')
 as.vector(wd[1:min(length(wd), length(wp))])-as.vector(wp[1:min(length(wd), length(wp))])
-diff <- as.vector(wd[1:min(length(wd), length(reqs$V1))])-as.vector(reqs$V1[1:min(length(wd), length(reqs$V1))])
 diff <- as.vector(wp[1:min(length(wp), length(reqs$V1))])-as.vector(reqs$V1[1:min(length(wp), length(reqs$V1))])
-lines(abs(diff), col='red', type='l')
   max(abs(diff[-length(diff)]))
 #plot(wd, type = 'l')
 #plot(wp, type = 'l')
@@ -39,3 +44,24 @@ for(i in 1:length(reqs$V1)) {
   else
     diff[i] = reqs$V1[i]
 }
+
+
+cumulative <- reqs$V1
+for (ii in 2:length(cumulative)) {
+  cumulative[ii] = cumulative[ii] + cumulative[ii-1]
+}
+plot(cumulative)
+abline(h=2920185)
+abline(h=4893269)
+abline(v=which(cumulative >= 2920185)[1])
+lines(reqs$V1, col='blue')
+
+
+cumulative[8991]
+
+( m <- matrix(1:12, 3, 4) )
+div.3 <- m %% 3 == 0
+which(div.3)
+which(div.3, arr.ind = TRUE)
+rownames(m) <- paste("Case", 1:3, sep = "_")
+which(m %% 5 == 0, arr.ind = TRUE)

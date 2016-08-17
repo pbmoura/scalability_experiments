@@ -8,7 +8,9 @@ file_name_h <- args[2]
 
 #file_name <- "./data/step3/uslFIFA2.ad"
 #file_name_h <- "./data/step3/uslFIFA2.hand"
-
+file_name <- './data/step3/uslFIFA63d/1/monitoring'
+file_name <- './data/step4/10/monitoring'
+file_name <- './data/step3/singleFIFA63d/arrival-departure'
 
 data <- read.table(file_name)
 data2 <- read.table(file_name_h)
@@ -21,11 +23,15 @@ xrange <- range(time_sec)
 
 #pdf(file=paste0(file_name, ".pdf"))
 par(mar = c(4,4,2,4))
-plot(time_sec, data$V3, xlim = xrange, type="l", xlab="time (sec.)", ylab="queue size", ylim=c(0,max(quantities$arrival)))
-plot_over(data.frame(time_sec, data$V4), "pool size/workload", type = "l", xlim = xrange, lty=2, ylim = c(0,max(data$V4, 1000/max(wl$intervals))))
+#plot(time_sec, data$V3, pch='.')
+plot(time_sec, data$V3, xlim = xrange, type="l", xlab="time (sec.)", ylab="queue size", ylim=c(0,max(data$V3)))
+#plot(time_sec, data$V4, xlim = xrange, type="l", xlab="time (sec.)", ylab="pool size", ylim=c(0,max(data$V4)))
+plot_over(data.frame(time_sec, data$V4), "pool size/workload", type = "s", xlim = xrange, lty=2, ylim = c(0,max(data$V4)))
+#plot_over(data.frame(time_sec, data$V4), "pool size", type = "l", xlim = xrange, lty=2, ylim = c(0,max(data$V4)))
 plot_over(wl, "", type = "l", lty = 3, xlim = xrange, ylim = c(0,max(data$V4, 1000/max(wl$intervals))))
 #plot(wl, type = "l", lty = 3)
 legend("topleft", legend=c("queue", "pool", "workload"), lty=c(1,2,3), bty='n')
+#legend("topleft", legend=c("queue", "pool"), lty=c(1,2), bty='n')
 #dev.off()
 
 ad <- by(data, data$V2, identity)
