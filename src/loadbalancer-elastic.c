@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <math.h>
+#include <unistd.h>
 #include "common.c"
 #include "Linked_list.c"
 #include "Node.c"
@@ -84,8 +85,9 @@ char* remove_worker() {
 	node = (Node*)(workers->value);
 	name = node->name;
 	update_workers(-1, name);
-	pthread_cancel(node->thread);
-	free(node);
+	//pthread_cancel(node->thread);
+	//free(node);
+	node->active = 0;
 	iterate(&workers);
 	num_workers--;
 	sem_post(sem_workers);
@@ -186,17 +188,23 @@ void* handle_request(void *arg) {
 				break;
 			default:
 				fprintf(stderr, "%ld got reply %lu\n", time_millis(), data);
-				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+				//pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 				departureNode(worker);
 				sem_wait(sem_reply);
-				write(connfd, &data, sizeof(data));
+				bytes_read = write(connfd, &data, sizeof(data));
+				switch(bytes_read) {
+					case -1: fprintf(stderr, "ERROR writing to client: %d\n", errno);
+						break;
+					case 0: fprintf(stderr, "ERROR wrote 0 bytes to client. data = %lu\n", data);
+				}
 				sem_post(sem_reply);
 				et = time_millis();
 				departure();
 				fprintf(stdout, "%ld %lu %d\n", et, data, worker->socket);
 				fflush(stdout);
-				if (worker->queue_size == 0)
-					pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+				if (worker->queue_size == 0 && worker->active == 0)
+					pthread_exit(NULL);
+					//pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 		}
 	}
 }

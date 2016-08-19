@@ -5,7 +5,7 @@ typedef struct Node {
 	char* name;
 	int socket;
 	pthread_t thread;
-	int queue_size;
+	int queue_size, active;
 	pthread_mutex_t mutex;
 	sem_t *sem_read;
 }Node;
@@ -17,6 +17,7 @@ Node* createNode(char* name, int socket, pthread_t thread) {
 	node->socket = socket;
 	node->thread = thread;
 	node->queue_size = 0;
+	node->active = 1;
 	pthread_mutex_init(&(node->mutex), NULL );
 	sprintf(label, "/sem_read_%s", name);
 	node->sem_read = createsemaphore(label, 0);
