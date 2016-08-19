@@ -12,8 +12,8 @@ file_name3 <- args[3]
 #file_name3 <- './data/step2/elastic3c_20.hand'
 
 
-file_name1 <- './data/step3/uslTEST2.mon'
-file_name3 <- './data/step3/usl1000.hand'
+file_name1 <- './data/step3/uslFIFA/uslFIFA.mon'
+file_name3 <- './data/step3/uslFIFA/uslFIFA.hand'
 
 
 data1 <- read.table(file_name1)

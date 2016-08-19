@@ -1,16 +1,16 @@
 
 
 
+
 workload <- function(sample) {
   arrivals <- sample[,1]
+  
+  residual = arrivals[1] %% 1000
+  arrivals = arrivals - residual
+  
   table(trunc((arrivals-arrivals[1])/1000))
-  
-  
-#   len <- length(arrivals)
-#   intervals <- 1000/c(arrivals[2:len] - arrivals[1:len-1], 0)
-#   time_sec <- (arrivals-arrivals[1])/1000
-#   s_frame <- data.frame(time_sec, intervals)
 }
+
 
 plot_over <- function(data, ylab, ...) {
   par(new = TRUE)
