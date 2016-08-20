@@ -45,16 +45,30 @@ int estimate_num_workers() {
 	return n;
 }
 
+long workers_available(Linked_list *iterator) {
+	double available = 0;
+	int queue_size;
+	while (iterator != NULL) {
+		queue_size = ((Node*)iterator->value)->queue_size;
+		fprintf(stderr, "%ld queue size %d\n", time_millis(), queue_size);
+		if (queue_size < worker_capacity)
+			available += ((worker_capacity - queue_size)/(double)worker_capacity);
+		iterate(&iterator);
+	}
+	fprintf(stderr, "%ld workers available %f\n", time_millis(), available);
+	return lrint(available); 
+}
+
 void verify_num_workers() {
 	int n, diff;
 
 	//n = estimate_num_workers(num_workers, load);
 	n = estimate_num_workers();
-	diff = n - num_workers;
+	diff = n - workers_available(workers);
 	fprintf(stderr, "%ld estimate %d diff %d\n", time_millis(), n, diff);
-	if (load > usl(num_workers) * x1)
+	/*if (load > usl(num_workers) * x1)
 		request_workers(pool_manager, n);
-	else
+	else*/
 		if (diff > 0) {
 				request_workers(pool_manager, diff);
 		} else if (diff < 0) {
