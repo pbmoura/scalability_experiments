@@ -2,7 +2,8 @@
 
 double contention, coherency, s1, x1, max_throughput, max_workers;
 sem_t *sem_arrival;
-int arrivals, worker_capacity;
+int arrivals, worker_capacity, monitoring_fraction;
+long last_cycle;
 
 int usl_peak() {
 	return lrint(sqrt((1 - contention) / coherency));
@@ -13,7 +14,7 @@ double usl(int n) {
 }
 
 double arrival_rate() {
-	return (float)arrivals / ((float)monitoring_interval/1000.0);
+	return (float)arrivals / ((float)monitoring_interval/monitoring_fraction/1000.0);
 }
 
 double estimate_workers(double x) { //x is required throughput
@@ -80,12 +81,15 @@ void verify_num_workers() {
 		}
 	sem_wait(sem_arrival);
 	arrivals = 0;
+	last_cycle = time_millis();
 	sem_post(sem_arrival);
 }
 
 void onarrival() {
+	long now = time_millis();
 	sem_wait(sem_arrival);
-	arrivals++;
+	if ( (now > last_cycle) && ( (now - last_cycle)) >= (monitoring_interval / monitoring_fraction) * (monitoring_fraction-1) ) 
+		arrivals++;
 	sem_post(sem_arrival);
 }
 
@@ -94,9 +98,11 @@ void init(int argc, char *argv[]) {
 	coherency = atof(argv[4]);
 	s1 = atof(argv[5]);
 	x1 = atof(argv[6]);
-	worker_capacity = atoi(argv[7]);
+	worker_capacity = s1 * x1;//atoi(argv[7]);
+	monitoring_fraction = atoi(argv[8]);
 	max_workers = usl_peak();
 	max_throughput = usl(max_workers) * x1;
+	last_cycle = time_millis();
 	sem_arrival = createsemaphore("/sem_arrival", 1);
 	fprintf(stderr, "limit of %f workers at %f req/s\n", max_workers, max_throughput);
 }
