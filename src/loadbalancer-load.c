@@ -1,11 +1,12 @@
 #include "loadbalancer-elastic.c"
 
-int limit_max, limit_min;
+int limit_max, limit_min, pool_step;
 
 void init(int argc, char *argv[]) {
 	fprintf(stderr, "init %s - %s\n", argv[3], argv[4]);
 	limit_min = atoi(argv[3]);
 	limit_max = atoi(argv[4]);
+	pool_step = atoi(argv[5]);
 	fprintf(stderr, "load limits %i - %i\n", limit_min, limit_max);
 }
 
@@ -26,9 +27,9 @@ void verify_num_workers() {
 	} while (iterator != NULL);
 	fprintf(stderr, "num of workers between %i and %i\n", min, max);
 	if (min >= limit_max)
-		request_workers(pool_manager, 1);
+		request_workers(pool_manager, pool_step);
 	if (max <= limit_min && num_workers > 1)
-		release_workers(pool_manager, -1);
+		release_workers(pool_manager, -pool_step);
 }
 
 void onarrival() {}

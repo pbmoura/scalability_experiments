@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "common.c"
 //#include "Linked_list.c"
 #include "HashTable.c"
@@ -5,7 +6,7 @@
 struct HashTable* table;
 unsigned long responses=0;
 int sock;
-sem_t *sem_read;
+//sem_t *sem_read;
 
 typedef struct req_arg {
 	unsigned long counter, delay, start_time;
@@ -55,6 +56,7 @@ void *handle_responses(void* arg) {
 				} else {
 					duration = end_time - args->start_time;
 					printf("%lu %lu %lu %lu\n", args->start_time, args->delay, duration, reply);
+					fflush(stdout);
 					sem_wait(sem);
 					responses++;
 					sem_post(sem);
