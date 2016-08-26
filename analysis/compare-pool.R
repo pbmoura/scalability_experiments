@@ -16,11 +16,13 @@ file_name3 <- args[3]
 #file_name2 <- './data/step3/uslFIFA63d/arrival-departure'
 #file_name3 <- './data/step3/day63d.reqs'
 
-#file_name1 <- './data/step3/singleFIFA63d/30/monitoring'
-#file_name3 <- './data/step3/uslFIFA63d/30-6/monitoring'
-#file_name2 <- './data/step3/uslFIFA63d/30/monitoring'
+#file_name1 <- './data/step3/singleFIFA63d/monitoring'
+#file_name2 <- './data/step3/uslFIFA63d/monitoring'
+#file_name3 <- './data/step3/uslFIFA63d/10-2/monitoring'
 #file_name3 <- './data/step3/day63d.reqs'
 
+#file_name1 <- './data/step4/10-2/monitoring'
+#file_name2 <- './data/step4/10/monitoring'
 
 
 
@@ -53,13 +55,20 @@ plot_over(data3$V1, "workload", type="l", xlim=c(0,max(time_sec1, time_sec2)), y
 #plot_over(wd, "workload", type="l", xlim=c(0,max(time_sec1)), ylim=c(0,max(wd$intervals[wd$intervals != Inf])))
 legend("topleft", legend = c("workload", "single-step", "USL"), col=c("black", "red", "blue"), lty=c(2,3,2), bty='n')
 
+legend("topleft", legend = c("USL-short history", "USL"), col=c("red", "blue"), lty=1, bty='n')
+
 legend("topleft", legend = c("single-step", "USL", "USL-short history"), col=c("red", "blue", "green"), lty=1, bty='n')
 
 #legend(x = 0, y = 5, legend = c("USL", "single-step", "workload"), col=c("blue", "red", "black"), lty=1, bty = 'n')
 
 avg(time_sec1, data1$V4)
 avg(time_sec2, data2$V4)
+avg(time_sec3, data3$V4)
 
 integral(time_sec1, data1$V4)
 integral(time_sec2, data2$V4)
+integral(time_sec3, data3$V4)
 
+max(data1$V4)
+max(data2$V4)
+max(data3$V4)

@@ -65,3 +65,22 @@ usl.line <- function(limit, n, throughput, ...) {
   abline(v=limit, ...)
   infer
 }
+
+max.n.func <- function(a, b, t1) {
+  function(sla) {
+    ( t1*a - t1*b - sla - (sla + t1*a + t1*b) - sqrt(2*sla*t1*b - 2*sla*t1*a - 2*t1^2*a*b - 4*t1^2*b*(1-a)) )/2*t1*b
+  }
+}
+
+max.n.func <- function(a, b, t) {
+  function(sla) {
+    (sqrt(t^2 * (a^2 + 2*a*b + (b-4)*b) + 2*sla*t*(b-a) + sla^2) - a*t +b*t + sla)/(2*b*t)
+  }
+}
+
+service.time.func <- function(a, b, t1) {
+  function(n) {
+    t1*(a + (1-a)/n +b*(n-1))
+  }
+}
+  

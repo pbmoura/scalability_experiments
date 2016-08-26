@@ -10,6 +10,7 @@ file_name_h <- args[2]
 #file_name_h <- "./data/step3/uslFIFA2.hand"
 file_name <- './data/step3/uslFIFA63d/1/monitoring'
 file_name <- './data/step4/10/monitoring'
+file_name <- './data/step4/single/10/3/monitoring'
 file_name <- './data/step3/singleFIFA63d/arrival-departure'
 
 data <- read.table(file_name)

@@ -50,8 +50,10 @@ legend("topleft", legend = c("workload", "single-step", "USL"), col=c("black", "
 
 avg(time_sec1, data1$V3)
 avg(time_sec2, data2$V3)
+avg(time_sec3, data3$V3)
 
-max(data1$V4)
-max(data2$V4)
+max(data1$V3)
+max(data2$V3)
+max(data3$V3)
 
 
