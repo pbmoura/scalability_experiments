@@ -24,7 +24,12 @@ file_name3 <- args[3]
 #file_name1 <- './data/step4/10-2/monitoring'
 #file_name2 <- './data/step4/10/monitoring'
 
+#file_name1 <- './data/step4/10-pool-lim/monitoring'
+#file_name2 <- './data/step4/10/monitoring'
+#file_name3 <- './data/step4/single/10/monitoring'
 
+#file_name1 <- './data/step4/10-pool-lim/monitoring'
+#file_name2 <- './data/step4/10-2-pool-lim/monitoring'
 
 data1 <- read.table(file_name1)
 data2 <- read.table(file_name2)
@@ -56,8 +61,10 @@ plot_over(data3$V1, "workload", type="l", xlim=c(0,max(time_sec1, time_sec2)), y
 legend("topleft", legend = c("workload", "single-step", "USL"), col=c("black", "red", "blue"), lty=c(2,3,2), bty='n')
 
 legend("topleft", legend = c("USL-short history", "USL"), col=c("red", "blue"), lty=1, bty='n')
+legend("topleft", legend = c("USL-pool limit", "USL-avail"), col=c("red", "blue"), lty=1, bty='n')
 
-legend("topleft", legend = c("single-step", "USL", "USL-short history"), col=c("red", "blue", "green"), lty=1, bty='n')
+legend("topright", legend = c("single-step", "USL", "USL-short history"), col=c("red", "blue", "green"), lty=1, bty='n')
+legend("topright", legend = c("single-step", "USL", "USL-pool limit"), col=c("green", "blue", "red"), lty=1, bty='n')
 
 #legend(x = 0, y = 5, legend = c("USL", "single-step", "workload"), col=c("blue", "red", "black"), lty=1, bty = 'n')
 

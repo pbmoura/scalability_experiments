@@ -7,14 +7,20 @@ file_name1 <- './data/step3/day63d.reqs'
 
 file_name3 <- './data/step3/singleFIFA63d/handling'
 file_name3 <- './data/step3/uslFIFA63d/1/handling'
-file_name3 <- './data/step4/10/handling'
-file_name3 <- './data/step4/single/10/3/handling'
+file_name3 <- './data/step4/10-2-pool-lim/handling'
+file_name3 <- './data/step4/estimated_start/handling'
+file_name3 <- './data/step4/single/10/2/handling'
 
 file_name4 <- './data/step3/uslFIFA53c/player'
 
 file_name3 <- './data/step3/uslFIFA63c.reqs'
 file_name3 <- './data/step3/test.player'
 file_name4 <- './data/step3/uslFIFA63c.hand'
+
+
+#file_name1 <- './data/step4/10-pool-lim/departures'
+#file_name2 <- './data/step4/10/departures'
+#file_name3 <- './data/step4/10-2/departures'
 
 
 reqs <- read.table(file_name1)

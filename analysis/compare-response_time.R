@@ -17,8 +17,16 @@ SLA <- args[3]
 #file_name2 <- "./data/step3/uslFIFA63d/results/uslFIFA63d.play"
 #file_name3 <- "./data/step3/uslFIFA63d/10-2/results/uslFIFA63d.play"
 
-#file_name1 <- "./data/step4/10-2/results/uslFIFA63d.play"
+#file_name1 <- "./data/step4/10-pool-lim/results/uslFIFA63d.play"
 #file_name2 <- "./data/step4/10/results/uslFIFA63d.play"
+#file_name1 <- "./data/step4/10-2/results/uslFIFA63d.play"
+
+#file_name1 <- "./data/step4/10-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/estimated_start/results/uslFIFA63d.play"
+#file_name3 <- "./data/step4/10-2/results/uslFIFA63d.play"
+
+#file_name1 <- "./data/step4/10-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/10-2-pool-lim/results/uslFIFA63d.play"
 
 #file_name2 <- "./data/step4/single/10/2/results/singleFIFA63d.play"
 #file_name3 <- "./data/step4/single/10/3/results/singleFIFA63d.play"
@@ -61,9 +69,13 @@ plot(time_sec1, data1[order(data1$V1),3], ylim=c(0,ymax), col='red', xlab="time 
 points(time_sec2, data2[order(data2$V1),3], col='blue', pch='.')
 points(time_sec3, data3[order(data3$V1),3], col='green', pch='.')
 abline(h=SLA)
-legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" ), paste0("USL-short history", sla_violation3, "%" )), col=c("red", "blue", "green"), lty=1, bty='n', title="% SLA violations")
+legend("topright", legend = c(paste0("USL-pool limit ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" ), paste0("single-step ", sla_violation3, "%" )), col=c("red", "blue", "green"), lty=1, bty='n', title="% SLA violations")
 #legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
-legend("topright", legend = c(paste0("USL-short history ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
+legend("topright", legend = c(paste0("USL-pool limit ", sla_violation1, "%"), paste0("USL-avail ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
+
+
+diff <- data1[order(data1$V1),3]-data2[order(data2$V1),3]
+plot(diff, ylim=c(-200,200))
 
 
 plot(time_sec1, data1[order(data1$V1),3], xlab="time (sec)", ylab="response time (ms)", pch='.')
