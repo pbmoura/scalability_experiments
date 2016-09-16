@@ -2,13 +2,15 @@
 #setwd("~/github/scalability_experiments/analysis")
 source("./common.R")
 
-file_name1 <- './data/step3/uslFIFA63c-old/day63c.reqs'
 file_name1 <- './data/step3/day63d.reqs'
 
 file_name3 <- './data/step3/singleFIFA63d/handling'
 file_name3 <- './data/step3/uslFIFA63d/1/handling'
 file_name3 <- './data/step4/10-2-pool-lim/handling'
-file_name3 <- './data/step4/estimated_start/handling'
+file_name3 <- './data/step4/30-pool-lim/handling'
+file_name3 <- './data/step4/30-6-pool-lim/handling'
+file_name3 <- './data/step4/estimated_start/10-pool-lim/handling'
+file_name3 <- './data/step4/estimated_start/single-10/handling'
 file_name3 <- './data/step4/single/10/2/handling'
 
 file_name4 <- './data/step3/uslFIFA53c/player'

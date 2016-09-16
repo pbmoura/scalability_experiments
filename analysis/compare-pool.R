@@ -31,6 +31,10 @@ file_name3 <- args[3]
 #file_name1 <- './data/step4/10-pool-lim/monitoring'
 #file_name2 <- './data/step4/10-2-pool-lim/monitoring'
 
+#file_name1 <- './data/step4/30-pool-lim/monitoring'
+#file_name2 <- './data/step4/30-6-pool-lim/monitoring'
+
+
 data1 <- read.table(file_name1)
 data2 <- read.table(file_name2)
 data3 <- read.table(file_name3)

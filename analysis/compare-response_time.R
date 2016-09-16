@@ -28,6 +28,9 @@ SLA <- args[3]
 #file_name1 <- "./data/step4/10-pool-lim/results/uslFIFA63d.play"
 #file_name2 <- "./data/step4/10-2-pool-lim/results/uslFIFA63d.play"
 
+#file_name1 <- "./data/step4/30-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/30-6-pool-lim/results/uslFIFA63d.play"
+
 #file_name2 <- "./data/step4/single/10/2/results/singleFIFA63d.play"
 #file_name3 <- "./data/step4/single/10/3/results/singleFIFA63d.play"
 SLA <- 3000
