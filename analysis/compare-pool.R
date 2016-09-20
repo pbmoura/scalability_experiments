@@ -28,8 +28,13 @@ file_name3 <- args[3]
 #file_name2 <- './data/step4/10/monitoring'
 #file_name3 <- './data/step4/single/10/monitoring'
 
-#file_name1 <- './data/step4/10-pool-lim/monitoring'
-#file_name2 <- './data/step4/10-2-pool-lim/monitoring'
+#file_name1 <- './data/step4/estimated_start/single-10/monitoring'
+#file_name2 <- './data/step4/estimated_start/10-usl/monitoring'
+#file_name3 <- './data/step4/estimated_start/10-2-usl/monitoring'
+
+#file_name1 <- './data/step4/estimated_start/10-2-avail/monitoring'
+#file_name2 <- './data/step4/estimated_start/10-2-pool-lim/monitoring'
+
 
 #file_name1 <- './data/step4/30-pool-lim/monitoring'
 #file_name2 <- './data/step4/30-6-pool-lim/monitoring'
