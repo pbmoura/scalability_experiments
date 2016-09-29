@@ -33,13 +33,27 @@ SLA <- args[3]
 #file_name2 <- "./data/step4/estimated_start/10-avail/results/uslFIFA63d.play"
 #file_name3 <- "./data/step4/estimated_start/single-10/results/singleFIFA63d.play"
 
+#file_name1 <- "./data/step4/estimated_start/30-6-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/estimated_start/30-single/results/singleFIFA63d.play"
+#file_name3 <- "./data/step4/estimated_start/30-pool-lim/results/uslFIFA63d.play"
 
 #file_name1 <- "./data/step4/30-pool-lim/results/uslFIFA63d.play"
 #file_name2 <- "./data/step4/30-6-pool-lim/results/uslFIFA63d.play"
 
 #file_name2 <- "./data/step4/single/10/2/results/singleFIFA63d.play"
 #file_name3 <- "./data/step4/single/10/3/results/singleFIFA63d.play"
+
+#file_name1 <- "./data/step4/synthetic/results/usl3b.play"
+#file_name2 <- "./data/step4/synthetic/results/usl5b.play"
+
+#file_name1 <- './data/step2/single5b_20.play'
+#file_name2 <- './data/step2/elastic5b_20.play'
+#file_name3 <- './data/step4/synthetic/results/usl5b.play'
+
+
 SLA <- 3000
+SLA <- 13000
+SLA <- 8000
 
 data1 <- read.table(file_name1)
 data2 <- read.table(file_name2)
@@ -60,10 +74,10 @@ abline(h=SLA)
 ymax = max(data1[order(data1$V1),3], data2[order(data2$V1),3], data3[order(data3$V1),3])
 plot(data1[order(data1$V1),3], ylim=c(0,ymax), col='red', type='l', xlab="#request", ylab="response time (ms)")
 lines(data2[order(data2$V1),3], col='blue', type='l')
-lines(data3[order(data3$V1),3], col='green', type='l')
+lines(data3[order(data3$V1),3], col='dark green', type='l')
 abline(h=SLA)
 #legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
-legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" ), paste0("USL-short history", sla_violation3, "%" )), col=c("red", "blue", "green"), lty=1, bty='n', title="% SLA violations")
+legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" ), paste0("USL-pool", sla_violation3, "%" )), col=c("red", "blue", "dark green"), lty=1, bty='n', title="% SLA violations")
 
 #wl <- data.frame(1:length(data1$V2) * 3, 1000000/data1[order(data1$V1),2])
 #plot_over(wl, "workload", type="l", ylim=c(0,max(1000000/data1[order(data1$V1),2])))

@@ -12,7 +12,8 @@ file_name <- './data/step3/uslFIFA63d/1/monitoring'
 file_name <- './data/step4/estimated_start/monitoring'
 file_name <- './data/step4/single/10/2/monitoring'
 file_name <- './data/step3/singleFIFA63d/arrival-departure'
-file_name <- './data/step4/estimated_start/10-pool-lim/monitoring'
+file_name <- './data/step4/estimated_start/30-single/monitoring'
+file_name <- './data/step4/synthetic/usl1_30.ad'
 
 data <- read.table(file_name)
 
