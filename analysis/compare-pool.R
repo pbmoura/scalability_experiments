@@ -7,9 +7,9 @@ file_name1 <- args[1]
 file_name2 <- args[2]    
 file_name3 <- args[3]
 
-#file_name1 <- './data/step2/single5b_20.ad'
-#file_name2 <- './data/step2/elastic5b_20.ad'
-#file_name3 <- './data/step2/elastic5b_20.hand'
+#file_name1 <- './data/step2/single3b_20.ad'
+#file_name2 <- './data/step2/elastic3b_20.ad'
+#file_name3 <- './data/step4/synthetic/usl3b.ad'
 
 #file_name1 <- './data/step3/singleFIFA63d/arrival-departure'
 #file_name1 <- './data/step3/uslFIFA63d/30-5/arrival-departure'
