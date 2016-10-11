@@ -12,8 +12,9 @@ file_name <- './data/step3/uslFIFA63d/1/monitoring'
 file_name <- './data/step4/estimated_start/monitoring'
 file_name <- './data/step4/single/10/2/monitoring'
 file_name <- './data/step3/singleFIFA63d/arrival-departure'
-file_name <- './data/step4/estimated_start/10-pool-lim/monitoring'
+file_name <- './data/step4/synthetic/usl1_15.ad'
 
+file_name <- './data/step4/estimated_start/10-2-pool-lim/monitoring'
 data <- read.table(file_name)
 
 time_sec <- (data$V1-data[1,1])/1000
@@ -22,7 +23,7 @@ quantities <- tapply(data$V3, data$V2,c)
 xrange <- range(time_sec)
 
 #pdf(file=paste0(file_name, ".pdf"))
-par(mar = c(4,4,2,4))
+#par(mar = c(4,4,2,4))
 #plot(time_sec, data$V3, pch='.')
 plot(time_sec, data$V3, xlim = xrange, type="l", xlab="time (sec.)", ylab="queue size", ylim=c(0,max(data$V3)))
 #plot(time_sec, data$V4, xlim = xrange, type="l", xlab="time (sec.)", ylab="pool size", ylim=c(0,max(data$V4)))
@@ -40,8 +41,9 @@ ad <- by(data, data$V2, identity)
 
 #pool
 avg(time_sec, data$V4)
-integral(time_sec, data$V4)
 max(data$V4)
 #queue
 avg(time_sec, data$V3)
 max(data$V3)
+#cost
+integral(time_sec, data$V4)

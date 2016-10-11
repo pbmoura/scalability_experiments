@@ -2,16 +2,16 @@
 #setwd("~/github/scalability_experiments/analysis")
 source("./common.R")
 
-file_name1 <- './data/step3/day63d.reqs'
+file_name1 <- './data/step4/day63d.reqs'
 
 file_name3 <- './data/step3/singleFIFA63d/handling'
 file_name3 <- './data/step3/uslFIFA63d/1/handling'
 file_name3 <- './data/step4/10-2-pool-lim/handling'
-file_name3 <- './data/step4/30-pool-lim/handling'
+file_name3 <- './data/step4/10-pool-lim/handling'
 file_name3 <- './data/step4/30-6-pool-lim/handling'
-file_name3 <- './data/step4/estimated_start/10-pool-lim/handling'
+file_name3 <- './data/step4/estimated_start/10-pool-lim/handling2'
 file_name3 <- './data/step4/estimated_start/10-2-avail/handling'
-file_name3 <- './data/step4/estimated_start/10-usl/handling'
+file_name3 <- './data/step4/estimated_start/30-usl/handling'
 file_name3 <- './data/step4/estimated_start/single-10/handling'
 file_name3 <- './data/step4/single/10/2/handling'
 
@@ -30,6 +30,7 @@ file_name4 <- './data/step3/uslFIFA63c.hand'
 reqs <- read.table(file_name1)
 plot(reqs$V1, type='l', ylim=c(0,750), ylab='req/sec', xlab="time(sec)")
 #plot_over(reqs$V1, type='l', ylim=c(0,750), ylab='req/sec')
+
 
 data3 <- read.table(file_name3)
 wd <- workload(data3)

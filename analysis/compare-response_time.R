@@ -25,13 +25,13 @@ SLA <- args[3]
 #file_name2 <- "./data/step4/estimated_start/results/uslFIFA63d.play"
 #file_name3 <- "./data/step4/10-2/results/uslFIFA63d.play"
 
-#file_name1 <- "./data/step4/estimated_start/10-2-avail/results/uslFIFA63d.play"
-#file_name2 <- "./data/step4/estimated_start/10-2-pool-lim/results/uslFIFA63d.play"
+#file_name1 <- "./data/step4/estimated_start/10-pool-upd/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/estimated_start/10-pool-lim/results/uslFIFA63d.play"
 #file_name3 <- "./data/step4/estimated_start/single-10/results/singleFIFA63d.play"
 
-#file_name1 <- "./data/step4/estimated_start/10-2-pool-lim/results/uslFIFA63d.play"
-#file_name2 <- "./data/step4/estimated_start/10-avail/results/uslFIFA63d.play"
-#file_name3 <- "./data/step4/estimated_start/single-10/results/singleFIFA63d.play"
+#file_name1 <- "./data/step4/estimated_start/30-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/estimated_start/30-6-pool-lim/results/uslFIFA63d.play"
+#file_name3 <- "./data/step4/estimated_start/30-single/results/singleFIFA63d.play"
 
 
 #file_name1 <- "./data/step4/30-pool-lim/results/uslFIFA63d.play"
@@ -82,6 +82,18 @@ legend("topright", legend = c(paste0("USL-pool limit ", sla_violation1, "%"), pa
 #legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
 legend("topright", legend = c(paste0("USL-pool limit ", sla_violation1, "%"), paste0("USL-avail ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
 
+by = 10000
+ymax=3000
+plot(time_sec1, data1[order(data1$V1),3], ylim=c(0,ymax), col='red', xlab="time (sec)", ylab="response time (ms)", pch='.')
+points(time_sec1[seq(0, length(time_sec1), by)], data1[order(data1$V1),3][seq(0, length(time_sec1), by)], col='red', pch=3)
+points(time_sec2, data2[order(data2$V1),3], col='blue', pch='.')
+points(time_sec2[seq(0, length(time_sec2), 100000)], data2[order(data2$V1),3][seq(0, length(time_sec2), 100000)], col='blue', pch=4)
+
+idxs = sapply(seq(0, time_sec1[length(time_sec1)], 100), function(x) {which.min(abs(time_sec1-x))})
+
+
+(1:100)[2]
+seq(0, length(time_sec1), 100)
 
 diff <- data1[order(data1$V1),3]-data2[order(data2$V1),3]
 plot(diff, ylim=c(-200,200))
