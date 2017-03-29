@@ -30,9 +30,12 @@
 
 # Debug files
 *.dSYM/
+
 results/
 logs/
 experiments/
 bin/
 .project
 .cproject
+*.fs0
+*.swp
