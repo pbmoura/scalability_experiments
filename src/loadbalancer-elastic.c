@@ -219,7 +219,7 @@ void* initial_monitoring(void* arg) {
 int main(int argc, char *argv[]) {
 	//struct ThreadPool *pool;
 	struct Task *aTask;
-	int listenfd = 0;
+	int listenfd = 0, bytes_read;
 	Node *worker;
 	unsigned long data;
 	pthread_t t_mon, t_req;
@@ -232,15 +232,15 @@ int main(int argc, char *argv[]) {
 
 	sem_load = createsemaphore("/sem_load", 1);
 	sem_workers = createsemaphore("/sem_workers", 1);
-	sem_reply = createsemaphore("sem_reply", 1);
+	sem_reply = createsemaphore("/sem_reply", 1);
 
-	request_workers(pool_manager, 1);
+	request_workers(pool_manager, 3);
 
 	socketlisten(&listenfd, atoi(PORT_LB));
 
 	fflush(stdout);
-	//pthread_create(&t_mon, NULL, monitoring, NULL);
-	pthread_create(&t_mon, NULL, initial_monitoring, NULL);
+	pthread_create(&t_mon, NULL, monitoring, NULL);
+	//pthread_create(&t_mon, NULL, initial_monitoring, NULL);
 	fprintf(stderr, "%ld accepting\n", time_millis());
 	connfd = accept(listenfd, (struct sockaddr*) NULL, NULL );
 	if (connfd == -1) {
@@ -248,12 +248,19 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	while (1) {
-		read(connfd, &data, sizeof(data));
-		worker = next_worker();
-		arrival();
-		fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
-		if(write(worker->socket, &data, sizeof(data)) == -1)
-			fprintf(stderr, "ERROR writing to %s: %d\n", worker->name, errno);
+		bytes_read = read(connfd, &data, sizeof(data));
+		switch(bytes_read) {
+			case -1:
+				fprintf(stderr, "ERROR reading from client: %d\n", errno);
+				break;
+			case 0: break;
+			default:
+				worker = next_worker();
+				arrival();
+				fprintf(stderr, "%ld handling request %lu to %s\n", time_millis(), data, worker->name);
+				if(write(worker->socket, &data, sizeof(data)) == -1)
+					fprintf(stderr, "ERROR writing to %s: %d\n", worker->name, errno);
+		}
 		//sem_post(worker->sem_read);
 	}
 }
