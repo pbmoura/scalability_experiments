@@ -37,9 +37,7 @@ int estimate_num_workers() {
 	if (load == 0)
 		n = 1;
 	else {
-		n = ceil(
-				estimate_workers(
-						arrival_rate()));
+		n = ceil(estimate_workers(arrival_rate()));
 		if (n < 1)
 			n = 1;
 	}
@@ -63,22 +61,24 @@ long workers_available(Linked_list *iterator) {
 void verify_num_workers() {
 	int n, diff;
 
-	//n = estimate_num_workers(num_workers, load);
 	n = estimate_num_workers();
 	diff = n - workers_available(workers);
+	//diff = n- num_workers;
 	fprintf(stderr, "%ld estimate %d diff %d\n", time_millis(), n, diff);
-	/*if (load > usl(num_workers) * x1)
-		request_workers(pool_manager, n);
-	else*/
-		if (diff > 0) {
-				request_workers(pool_manager, diff);
-		} else if (diff < 0) {
-			if (load > n * worker_capacity) {
-				diff = load / worker_capacity - num_workers;
-			}
-			if (diff < 0)
-				release_workers(pool_manager, diff);
+	//limit pool size to max_workers
+	if (diff + num_workers > max_workers)
+		diff = max_workers - num_workers;
+	if (diff > 0) {
+			request_workers(pool_manager, diff);
+	} else if (diff < 0) {
+		if (load > n * worker_capacity) {
+			fprintf(stderr, "%ld changing diff from %d", time_millis(), diff);
+			diff = load / worker_capacity - num_workers;
+			fprintf(stderr, " to %d\n", diff);
 		}
+		if (diff < 0)
+			release_workers(pool_manager, diff);
+	}
 	sem_wait(sem_arrival);
 	arrivals = 0;
 	last_cycle = time_millis();
