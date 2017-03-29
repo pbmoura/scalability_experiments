@@ -1,0 +1,62 @@
+#!/bin/bash
+#limit_min limit_max s1 num_processes num_workers trace_file sync_time1 sync_time2 mon_interval log_file prun_time
+if [ "a${10}" == "a" ]; then
+  log_file=`echo "$1_$2_$3_$4_$5_$6_$7_$8_$9"`
+else
+  log_file=`echo ${10}`
+fi
+echo "log_file: " $log_file
+mkdir -p logs
+mkdir -p results
+echo "starting workers"
+prun -t ${11} -np $5 ./worker-elastic.sh $7 $8 $4 $3 $log_file &
+num=0
+while [ $num != $5 ];
+do
+  sleep 5
+  NODES=`preserve -llist | grep $USER | cut -f 9 | sed 's/ /,/g'`
+  num=`echo $NODES |tr -s ',' '\n' | grep -c 'node'`
+done
+echo $NODES
+sleep 5
+echo "starting pool manager"
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> ~/scratch/logs/$log_file.pm
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> ~/scratch/results/$log_file.pm
+prun -t ${11} -np 1 poolmanager.sh $5 $NODES $log_file &
+poolmanager=""
+while ((`echo $poolmanager|wc -c` <= 1))
+do
+  sleep 5
+  echo "searching pool manager node"
+  if [ "$6" == "1" ]; then
+    poolmanager=`preserve -llist | grep $USER | awk '{if ($7 == "R") print $0}' |grep -v $NODES | cut -f 9`
+  else
+    poolmanager=`preserve -llist | grep $USER | awk '{if ($7 == "R" && $8 == "1") print $0}' | cut -f 9`
+  fi
+done
+echo "it is " $poolmanager
+
+echo "starting load balancer"
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> ~/scratch/logs/$log_file.lb
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> ~/scratch/results/$log_file.lb
+prun -t ${11} -np 1 ./loadbalancer-load.sh $poolmanager $9 $1 $2 $log_file &
+loadbalancer=""
+while ((`echo $loadbalancer|wc -c` <= 1))
+do
+  sleep 5
+  echo "searching load balacner node"
+  if [ "$6" == "1" ]; then
+    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "R") print $0}' | grep -v $poolmanager | grep -v $NODES | cut -f 9`
+  else    
+    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "R" && $8 == "1") print $0}' | grep -v $poolmanager | cut -f 9`
+  fi
+done
+echo "it is " $loadbalancer
+sleep 5
+echo $1 $2 $3 $4 $6 $7 $8 $9 `date` >> ~/scratch/logs/$log_file.play
+echo "#" $1 $2 $3 $4 $6 $7 $8 $9 `date` >> ~/scratch/results/$log_file.play
+echo "starting trace"
+prun -t ${11} -np 1 ./trace-player.sh $loadbalancer $6 $log_file
+echo "killing all"
+killall prun > /dev/null
+#preserve -c $RESERVATION

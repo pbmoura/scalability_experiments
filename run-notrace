@@ -1,0 +1,66 @@
+#!/bin/bash
+# 1         2         3  4  5             6           7          8          9          10                  11       12
+#contention coherency s1 x1 num_processes num_workers trace_file sync_time1 sync_time2 monitoring_interval log_file duration
+if [ "a$11}" == "a" ]; then
+  log_file=`echo "$1_$2_$3_$4_$5_$6_$7_$8_$9_$10"`
+else
+  log_file=`echo ${11}`
+fi
+echo "log_file: " $log_file
+mkdir -p logs
+mkdir -p results
+echo "starting workers"
+prun -t ${12} -np $6 ./worker-elastic.sh $8 $9 $5 $3 $log_file &
+num=0
+while [ $num != $6 ];
+do
+  sleep 5
+  NODES=`preserve -llist | grep $USER | cut -f 9 | sed 's/ /,/g'`
+  num=`echo $NODES |tr -s ',' '\n' | grep -c 'node'`
+done
+echo $NODES
+sleep 5
+echo "starting pool manager"
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/logs/$log_file.pm
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/results/$log_file.pm
+prun -t ${12} -np 1 poolmanager.sh $6 $NODES $log_file &
+poolmanager=""
+while ((`echo $poolmanager|wc -c` <= 1))
+do
+  sleep 5
+  echo "searching pool manager node"
+  if [ "$6" == "1" ]; then
+    poolmanager=`preserve -llist | grep $USER | awk '{if ($7 == "R") print $0}' |grep -v $NODES | cut -f 9`
+  else
+    poolmanager=`preserve -llist | grep $USER | awk '{if ($7 == "R" && $8 == "1") print $0}' | cut -f 9`
+  fi
+done
+echo "it is " $poolmanager
+
+echo "starting load balancer"
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/logs/$log_file.lb
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/results/$log_file.lb
+prun -t ${12} -np 1 ./loadbalancer-elastic.sh $poolmanager ${10} $1 $2 $3 $4 $5 $log_file &
+loadbalancer=""
+while ((`echo $loadbalancer|wc -c` <= 1))
+do
+  sleep 5
+  echo "searching load balacner node"
+  if [ "$6" == "1" ]; then
+    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "R") print $0}' | grep -v $poolmanager | grep -v $NODES | cut -f 9`
+  else    
+    loadbalancer=`preserve -llist | grep $USER | awk '{if ($7 == "R" && $8 == "1") print $0}' | grep -v $poolmanager | cut -f 9`
+  fi
+done
+echo "it is " $loadbalancer
+sleep 5
+echo $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10}`date` >> ~/scratch/logs/$log_file.play
+echo "#" $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} `date` >> ~/scratch/results/$log_file.play
+echo "ready to start trace"
+echo "gdb with $loadbalancer $7 1>>~/scratch/results/$log_file.play 2>>~/scratch/logs/$log_file.play"
+echo "run prun -np 1 ./trace-player.sh $loadbalancer $7 $log_file"
+#prun -np 1 ./trace-player.sh $loadbalancer $7 $log_file
+#echo "killing all"
+#killall prun > /dev/null
+#preserve -c $RESERVATION
+
