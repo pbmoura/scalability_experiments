@@ -27,3 +27,5 @@ integral <- function(x, y) {
 avg <- function(x, y) {
   integral(x, y)/max(x)
 }
+
+moving_avg <- function(x,n=5){filter(x,rep(1/n,n), sides=2)}

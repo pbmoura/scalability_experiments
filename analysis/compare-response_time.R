@@ -17,9 +17,43 @@ SLA <- args[3]
 #file_name2 <- "./data/step3/uslFIFA63d/results/uslFIFA63d.play"
 #file_name3 <- "./data/step3/uslFIFA63d/10-2/results/uslFIFA63d.play"
 
-#file_name1 <- "./data/step4/10/results/uslFIFA63d.play"
-#file_name2 <- "./data/step4/30/results/uslFIFA63d.play"
+#file_name1 <- "./data/step4/10-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/10/results/uslFIFA63d.play"
+#file_name1 <- "./data/step4/10-2/results/uslFIFA63d.play"
+
+#file_name1 <- "./data/step4/10-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/estimated_start/results/uslFIFA63d.play"
+#file_name3 <- "./data/step4/10-2/results/uslFIFA63d.play"
+
+#file_name1 <- "./data/step4/estimated_start/10-pool-upd/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/estimated_start/10-pool-lim/results/uslFIFA63d.play"
+#file_name3 <- "./data/step4/estimated_start/single-10/results/singleFIFA63d.play"
+
+#file_name1 <- "./data/step4/estimated_start/30-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/estimated_start/30-6-pool-lim/results/uslFIFA63d.play"
+#file_name3 <- "./data/step4/estimated_start/30-single/results/singleFIFA63d.play"
+
+#file_name1 <- "./data/step4/estimated_start/30-6-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/estimated_start/30-single/results/singleFIFA63d.play"
+#file_name3 <- "./data/step4/estimated_start/30-pool-lim/results/uslFIFA63d.play"
+
+#file_name1 <- "./data/step4/30-pool-lim/results/uslFIFA63d.play"
+#file_name2 <- "./data/step4/30-6-pool-lim/results/uslFIFA63d.play"
+
+#file_name2 <- "./data/step4/single/10/2/results/singleFIFA63d.play"
+#file_name3 <- "./data/step4/single/10/3/results/singleFIFA63d.play"
+
+#file_name1 <- "./data/step4/synthetic/results/usl3b.play"
+#file_name2 <- "./data/step4/synthetic/results/usl5b.play"
+
+#file_name1 <- './data/step2/single5b_20.play'
+#file_name2 <- './data/step2/elastic5b_20.play'
+#file_name3 <- './data/step4/synthetic/results/usl5b.play'
+
+
 SLA <- 3000
+SLA <- 13000
+SLA <- 8000
 
 data1 <- read.table(file_name1)
 data2 <- read.table(file_name2)
@@ -40,10 +74,10 @@ abline(h=SLA)
 ymax = max(data1[order(data1$V1),3], data2[order(data2$V1),3], data3[order(data3$V1),3])
 plot(data1[order(data1$V1),3], ylim=c(0,ymax), col='red', type='l', xlab="#request", ylab="response time (ms)")
 lines(data2[order(data2$V1),3], col='blue', type='l')
-lines(data3[order(data3$V1),3], col='green', type='l')
+lines(data3[order(data3$V1),3], col='dark green', type='l')
 abline(h=SLA)
 #legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
-legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" ), paste0("USL-short history", sla_violation3, "%" )), col=c("red", "blue", "green"), lty=1, bty='n', title="% SLA violations")
+legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" ), paste0("USL-pool", sla_violation3, "%" )), col=c("red", "blue", "dark green"), lty=1, bty='n', title="% SLA violations")
 
 #wl <- data.frame(1:length(data1$V2) * 3, 1000000/data1[order(data1$V1),2])
 #plot_over(wl, "workload", type="l", ylim=c(0,max(1000000/data1[order(data1$V1),2])))
@@ -51,23 +85,48 @@ legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste
 #points - over time
 time_sec1 <- (data1[order(data1$V1),1]-data1[1,1])/1000
 time_sec2 <- (data2[order(data2$V1),1]-data2[1,1])/1000
-ymax = max(data1[order(data1$V1),3], data2[order(data2$V1),3])
+time_sec3 <- (data3[order(data3$V1),1]-data3[1,1])/1000
+#ymax = max(data1[order(data1$V1),3], data2[order(data2$V1),3], na.rm = TRUE)
+ymax = max(data1[order(data1$V1),3], data2[order(data2$V1),3], data3[order(data3$V1),3], na.rm = TRUE)
 plot(time_sec1, data1[order(data1$V1),3], ylim=c(0,ymax), col='red', xlab="time (sec)", ylab="response time (ms)", pch='.')
 points(time_sec2, data2[order(data2$V1),3], col='blue', pch='.')
+points(time_sec3, data3[order(data3$V1),3], col='black', pch='.')
 abline(h=SLA)
-legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
+legend("topright", legend = c(paste0("USL-pool limit ", sla_violation1, "%"), paste0("USL-short ", sla_violation2, "%" ), paste0("single-step ", sla_violation3, "%" )), col=c("red", "blue", "black"), lty=1, bty='n', title="% SLA violations")
+#legend("topright", legend = c(paste0("single-step ", sla_violation1, "%"), paste0("USL ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
+legend("topright", legend = c(paste0("USL-pool limit ", sla_violation1, "%"), paste0("USL-avail ", sla_violation2, "%" )), col=c("red", "blue"), lty=1, bty='n', title="% SLA violations")
+
+by = 10000
+ymax=3000
+plot(time_sec1, data1[order(data1$V1),3], ylim=c(0,ymax), col='red', xlab="time (sec)", ylab="response time (ms)", pch='.')
+points(time_sec1[seq(0, length(time_sec1), by)], data1[order(data1$V1),3][seq(0, length(time_sec1), by)], col='red', pch=3)
+points(time_sec2, data2[order(data2$V1),3], col='blue', pch='.')
+points(time_sec2[seq(0, length(time_sec2), 100000)], data2[order(data2$V1),3][seq(0, length(time_sec2), 100000)], col='blue', pch=4)
+
+idxs = sapply(seq(0, time_sec1[length(time_sec1)], 100), function(x) {which.min(abs(time_sec1-x))})
 
 
+(1:100)[2]
+seq(0, length(time_sec1), 100)
 
+diff <- data1[order(data1$V1),3]-data2[order(data2$V1),3]
+plot(diff, ylim=c(-200,200))
+
+
+plot(time_sec1, data1[order(data1$V1),3], xlab="time (sec)", ylab="response time (ms)", pch='.')
 
 mean(data1$V3)
 mean(data2$V3)
+mean(data3$V3)
 
 sd(data1$V3)
 sd(data2$V3)
+sd(data3$V3)
 
 max(data1$V3)
 max(data2$V3)
+max(data3$V3)
 
 
 #barplot(data2[order(data2$V1),3], beside=TRUE, , xlab="requests", ylab="response time (ms)", border=NA)
+

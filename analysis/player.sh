@@ -1,2 +1,2 @@
 #!/bin/bash
-grep "running request" $1
+grep "sent request" $1
