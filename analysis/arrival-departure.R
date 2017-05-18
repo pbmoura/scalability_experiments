@@ -14,9 +14,14 @@ file_name <- './data/step4/single/10/2/monitoring'
 file_name <- './data/step3/singleFIFA63d/arrival-departure'
 file_name <- './data/step4/synthetic/usl1_15.ad'
 file_name <- './data/step4/estimated_start/30-single/monitoring'
+
 file_name <- './data/step4/synthetic/usl1_30.ad'
+file_name <- './data/step4/synthetic/usl5b.ad'
+file_name <- './data/step2/single5b_20.ad'
+file_name <- './data/step2/elastic5b_20.ad'
 
 file_name <- './data/step4/estimated_start/10-2-pool-lim/monitoring'
+
 data <- read.table(file_name)
 
 time_sec <- (data$V1-data[1,1])/1000

@@ -21,8 +21,8 @@ file_name3 <- './data/step3/uslFIFA63c/handling'
 
 file_name4 <- './data/step3/uslFIFA63c-old/handling'
 
-#file_name1 <- './data/step4/10-pool-lim/monitoring'
-#file_name2 <- './data/step4/10/monitoring'
+#file_name1 <- './data/step4/estimated_start/10-usl/monitoring'
+#file_name2 <- './data/step4/estimated_start/10-single/monitoring'
 #file_name3 <- './data/step4/10-2/monitoring'
 
 
@@ -47,12 +47,15 @@ time_sec3 <- (data3$V1-data3[1,1])/1000
 par(mar = c(5,4,1,5))
 #plot(time_sec1, data1$V3, type="l", col="red", xlab="time (sec.)", ylab="queue size", ylim=c(0,max(data1$V3)), xlim=c(0,max(time_sec1)))
 plot(time_sec1, data1$V3, type="l", col="red", xlab="time (sec.)", ylab="queue size", ylim=c(0,max(data1$V3, data2$V3, data3$V3)), xlim=c(0,min(max(time_sec1), max(time_sec2), max(time_sec3))), lty=2)
-lines(time_sec2, data2$V3, col="blue", lty=2)
-lines(time_sec3, data3$V3, col="dark green", lty=2)
+lines(time_sec2, data2$V3, col="blue", lty=3)
+lines(time_sec3, data3$V3, col="green", lty=4)
 plot_over(wd, "workload", type="l", xlim=c(0,max(time_sec1, time_sec2)), ylim=c(0,max(wd$intervals[wd$intervals != Inf])), lty=2)
-legend("topright", legend = c("USL-pool", "single-step", "USL"), col=c("dark green", "red", "blue"), lty=1, bty='n')
+legend("topright", legend = c("USL-limit", "single-step", "USL"), col=c("dark green", "red", "blue"), lty=1, bty='n')
+legend(y=120, x=320, legend = c("USL-limit", "single-step", "USL"), col=c("dark green", "red", "blue"), lty=1, bty='n')
 #legend("topleft", legend = c("USL", "single-step", "workload"), col=c("blue", "red", "black"), lty=1, bty='n')
 legend("topright", legend = c("USL-pool limit", "USL-avail", "USL-short avail"), col=c("red", "blue", "green"), lty=1, bty='n')
+
+abline(v=76)
 
 avg(time_sec1, data1$V3)
 avg(time_sec2, data2$V3)

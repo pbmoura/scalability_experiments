@@ -12,11 +12,11 @@ workload <- function(sample) {
 }
 
 
-plot_over <- function(data, ylab, ...) {
+plot_over <- function(data, ylab, s=4, line_num=0, ...) {
   par(new = TRUE)
   plot(data, axes=F, xlab=NA, ylab=NA, ...)
-  axis(side = 4)
-  mtext(side = 4, line = 3, ylab)
+  axis(side = s, line = line_num)
+  mtext(side = s, line = line_num+3, ylab)
 }
 
 integral <- function(x, y) {
